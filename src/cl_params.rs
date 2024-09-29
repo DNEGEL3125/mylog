@@ -26,4 +26,7 @@ pub struct MyOptions {
 
     #[options(help = "The date of the logs you want to read")]
     pub date: Option<String>,
+
+    #[options(help = "Enable verbose mode")]
+    pub verbose: bool,
 }
