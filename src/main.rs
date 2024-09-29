@@ -119,7 +119,7 @@ fn main() {
         };
 
         if verbose {
-            println!("Writing log message. \nLog info: {:#?}", log_item);
+            println!("Log info: {:#?}\nWriting the log message...", log_item);
         }
         append_log_item_to_file(&log_item, &log_file_path, quiet, verbose);
     }
