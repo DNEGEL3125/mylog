@@ -14,7 +14,7 @@ lazy_static! {
 pub struct CustomInputClassifier;
 
 impl InputClassifier for CustomInputClassifier {
-    fn classify_input(&self, ev: Event, _ps: &PagerState) -> Option<InputEvent> {
+    fn classify_input(&self, ev: Event, ps: &PagerState) -> Option<InputEvent> {
         match ev {
             Event::Key(KeyEvent {
                 code: KeyCode::Char('q'),
@@ -37,6 +37,16 @@ impl InputClassifier for CustomInputClassifier {
                 EVENT_EMITTER.lock().unwrap().emit("RIGHT", ());
                 Some(InputEvent::RestorePrompt)
             }
+            Event::Key(KeyEvent {
+                code: KeyCode::Up,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_sub(1))),
+            Event::Key(KeyEvent {
+                code: KeyCode::Down,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_add(1))),
             _ => None,
         }
     }

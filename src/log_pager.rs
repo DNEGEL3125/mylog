@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use chrono::{Days, NaiveDate};
+use chrono::{Datelike, Days, NaiveDate};
 use colored::Colorize;
 use minus::Pager;
 
@@ -121,7 +121,9 @@ impl LogPager {
         };
         let colored_content = Self::colour_log_conetent(file_content, colored::Color::Green);
         self.set_text(&colored_content);
-        let _ = self.pager.set_prompt(self.date.to_string());
+        let _ = self
+            .pager
+            .set_prompt(format!("{} {}", self.date, self.date.weekday()));
     }
 
     // pub fn _register_events(log_pager: &Arc<Mutex<Self>>) {
