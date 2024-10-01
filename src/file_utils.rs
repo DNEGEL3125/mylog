@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, io::Read, path::PathBuf, process::exit};
 
 pub fn get_file_content_by_path(file_path: &PathBuf) -> String {
     // Open the file
@@ -25,7 +25,11 @@ pub fn create_log_file_if_not_exists(log_file_path: &PathBuf, verbose: bool) {
 
     let result = File::create(log_file_path);
     if result.is_err() {
-        println!("Can't create the file. \n{}", result.err().unwrap());
+        println!("Can't create the log file.");
+        if verbose {
+            println!("{}", result.err().unwrap());
+        }
+        exit(-3034);
     }
 }
 

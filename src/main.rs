@@ -18,15 +18,16 @@ pub mod log_config;
 pub mod log_item;
 pub mod log_pager;
 
-fn paging_log_file_by_date(log_dir_path: PathBuf, date: NaiveDate) {
+fn paging_log_file_by_date(log_dir_path: PathBuf, date: NaiveDate, verbose: bool) {
     use std::thread;
-    let pager = LogPager::new(date, log_dir_path);
+    let mut log_pager = LogPager::new(date, log_dir_path);
+    log_pager.set_verbose(verbose);
 
-    let minus_pager = pager.pager().clone();
+    let minus_pager = log_pager.pager().clone();
 
-    let pager = Arc::new(Mutex::new(pager));
+    let log_pager = Arc::new(Mutex::new(log_pager));
 
-    LogPager::init_input_classifier(&pager);
+    LogPager::init_input_classifier(&log_pager);
 
     // Run the pager
     let pager_thread = thread::spawn(move || minus::dynamic_paging(minus_pager));
@@ -93,6 +94,6 @@ fn main() {
             None => now.date_naive(),
         };
 
-        paging_log_file_by_date(log_dir_path, date);
+        paging_log_file_by_date(log_dir_path, date, verbose);
     }
 }

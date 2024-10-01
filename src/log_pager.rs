@@ -13,6 +13,7 @@ pub(crate) struct LogPager {
     pager: Pager,
     date: NaiveDate,
     log_dir_path: PathBuf,
+    verbose: bool,
 }
 
 fn get_today_date() -> NaiveDate {
@@ -27,17 +28,16 @@ impl LogPager {
             pager,
             date,
             log_dir_path,
+            verbose: false,
         };
-
-        // let custom_input_classifier = Box::new(ret.init_input_classifier());
-        // Add keyboard/mouse-bindings
-        // ret.pager
-        //     .set_input_classifier(custom_input_classifier)
-        //     .unwrap();
 
         ret.update_pager();
 
         ret
+    }
+
+    pub fn set_verbose(&mut self, value: bool) {
+        self.verbose = value;
     }
 
     pub fn init_input_classifier(log_pager: &Arc<Mutex<Self>>) {
@@ -115,8 +115,14 @@ impl LogPager {
     fn update_pager(&mut self) {
         let file_path = construct_log_file_path(&self.log_dir_path, self.date);
         let file_content = if file_path.exists() {
+            if self.verbose {
+                println!("Reading '{}'", file_path.display());
+            }
             get_file_content_by_path(&file_path)
         } else {
+            if self.verbose {
+                println!("'{}' doesn't exist", file_path.display());
+            }
             String::new()
         };
         let colored_content = Self::colour_log_conetent(file_content, colored::Color::Green);
@@ -125,33 +131,6 @@ impl LogPager {
             .pager
             .set_prompt(format!("{} {}", self.date, self.date.weekday()));
     }
-
-    // pub fn _register_events(log_pager: &Arc<Mutex<Self>>) {
-    //     use minus::input::InputEvent;
-
-    //     let mut input_register = HashedEventRegister::default();
-
-    //     // Creates another pointer to the same allocation
-    //     let self_clone = Arc::clone(&log_pager);
-
-    //     // Left key event
-    //     input_register.add_key_events(&["down"], move |_, _| {
-    //         return InputEvent::Exit;
-    //         // To previous day
-    //         self_clone.lock().expect("Threading error").prev_day();
-    //         InputEvent::Ignore
-    //     });
-
-    //     // Creates another pointer to the same allocation
-    //     let self_clone = Arc::clone(&log_pager);
-
-    //     // Right key event
-    //     input_register.add_key_events(&["l"], move |_, _| {
-    //         // To next day
-    //         self_clone.lock().expect("Threading error").next_day();
-    //         InputEvent::Ignore
-    //     });
-    // }
 
     fn set_text(&self, s: &str) {
         self.pager.set_text(s).expect("Can't show pager");
