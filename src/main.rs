@@ -59,9 +59,8 @@ fn main() {
     // Command line parameters
     let opts = cl_params::MyOptions::parse_args_default_or_exit();
     let verbose = opts.verbose;
-    let quiet = opts.quiet;
 
-    if !log_dir_path.exists() && !quiet {
+    if !log_dir_path.exists() {
         println!(
             "The log directory doesn't exist.\nYou may want to configure it in '{}'",
             log_config::CONFIG_FILE_PATH.display()
@@ -83,7 +82,7 @@ fn main() {
             println!("Log info: {:#?}\nWriting the log message...", log_item);
         }
 
-        LogItem::append_to_file(&log_item, &log_file_path, quiet, verbose);
+        LogItem::append_to_file(&log_item, &log_file_path, verbose);
     }
 
     // Read log file

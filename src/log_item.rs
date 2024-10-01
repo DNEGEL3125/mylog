@@ -21,15 +21,14 @@ impl std::fmt::Display for LogItem {
 }
 
 impl LogItem {
-    pub fn append_to_file(&self, log_file_path: &PathBuf, quiet: bool, verbose: bool) {
+    pub fn append_to_file(&self, log_file_path: &PathBuf, verbose: bool) {
         let result = append_line_to_file(log_file_path, &self.to_string());
         if result.is_err() {
             println!("Can't write message to the log file");
             exit(3);
         }
-
-        if quiet {
-        } else if verbose {
+        
+        if verbose {
             println!(
                 r#"Written the log message to "{}""#,
                 log_file_path.display()

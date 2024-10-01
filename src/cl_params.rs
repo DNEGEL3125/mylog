@@ -18,9 +18,6 @@ pub struct MyOptions {
     #[options(help = "print help message")]
     pub help: bool,
 
-    #[options(help = "Do not print any messages")]
-    pub quiet: bool,
-
     #[options(help = "Enable colorful output")]
     pub colorful: bool,
 
