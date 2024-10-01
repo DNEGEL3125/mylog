@@ -114,14 +114,14 @@ impl LogPager {
 
     fn update_pager(&mut self) {
         let file_path = construct_log_file_path(&self.log_dir_path, self.date);
+
         let file_content = if file_path.exists() {
-            if self.verbose {
-                println!("Reading '{}'", file_path.display());
-            }
             get_file_content_by_path(&file_path)
         } else {
             if self.verbose {
-                println!("'{}' doesn't exist", file_path.display());
+                self.pager
+                    .send_message(format!("'{}' doesn't exist", file_path.display()))
+                    .expect("Can't send messages");
             }
             String::new()
         };
