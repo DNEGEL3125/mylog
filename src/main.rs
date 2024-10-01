@@ -63,7 +63,7 @@ fn main() {
 
     if !log_dir_path.exists() && !quiet {
         println!(
-            "The log dir doesn't exist.\nYou may want to configure it in '{}'",
+            "The log directory doesn't exist.\nYou may want to configure it in '{}'",
             log_config::CONFIG_FILE_PATH.display()
         );
         exit(1);
