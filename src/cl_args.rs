@@ -27,6 +27,28 @@ pub enum Commands {
         #[arg(short, long, action = clap::ArgAction::SetTrue, help = "Enable verbose mode.")]
         verbose: bool,
     },
+
+    /// Configure options
+    Config {
+        /// Configuration key (e.g., user.email)
+        key: String,
+
+        /// Configuration value (optional, e.g., xxx.com)
+        value: Option<String>,
+    },
+
+    /// Edit logs
+    Edit {
+        /// Date to edit
+        #[arg(
+            help = "The date of the logs to read in '%Y-%m-%d' format. If no date is provided, today's date will be used."
+        )]
+        date: Option<String>,
+
+        /// Print more output
+        #[arg(short, long, action = clap::ArgAction::SetTrue, help = "Enable verbose mode.")]
+        verbose: bool,
+    },
 }
 
 #[derive(clap::Parser)]

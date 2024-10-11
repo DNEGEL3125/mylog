@@ -16,11 +16,13 @@ pub struct CustomInputClassifier;
 impl InputClassifier for CustomInputClassifier {
     fn classify_input(&self, ev: Event, ps: &PagerState) -> Option<InputEvent> {
         match ev {
+            // Quit
             Event::Key(KeyEvent {
                 code: KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => Some(InputEvent::Exit),
+            // Previous date
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
@@ -29,6 +31,7 @@ impl InputClassifier for CustomInputClassifier {
                 EVENT_EMITTER.lock().unwrap().emit("LEFT", ());
                 Some(InputEvent::RestorePrompt)
             }
+            // Next date
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
@@ -37,11 +40,13 @@ impl InputClassifier for CustomInputClassifier {
                 EVENT_EMITTER.lock().unwrap().emit("RIGHT", ());
                 Some(InputEvent::RestorePrompt)
             }
+            // Previous line
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_sub(1))),
+            // Next line
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,

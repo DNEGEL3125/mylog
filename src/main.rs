@@ -7,7 +7,7 @@ use std::{
 use chrono::NaiveDate;
 use clap::Parser;
 use file_utils::create_log_file_if_not_exists;
-use log_config::LogConfig;
+use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
 
@@ -37,11 +37,12 @@ fn paging_log_file_by_date(log_dir_path: PathBuf, date: NaiveDate, verbose: bool
 }
 
 fn parse_date_from_str(date_str: &str) -> NaiveDate {
-    let date = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d");
+    let date_fmt = "%Y-%m-%d";
+    let date = NaiveDate::parse_from_str(&date_str, &date_fmt);
     if date.is_err() {
         println!(
-            "Invalid date '{}', the date should look like '2023-8-3'",
-            date_str
+            "Invalid date '{}', the date format should be '{}'",
+            date_str, date_fmt
         );
         exit(-101);
     }
@@ -61,8 +62,10 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
     paging_log_file_by_date(log_dir_path, date, verbose);
 }
 
-fn write_log(log_content: String, verbose: bool, log_file_path: &PathBuf) {
+fn write_log(log_content: String, verbose: bool, log_dir_path: &PathBuf) {
     let now = chrono::prelude::Local::now();
+
+    let log_file_path = construct_log_file_path(log_dir_path, now.date_naive());
 
     // If the log file does not exist, create it
     create_log_file_if_not_exists(&log_file_path, verbose);
@@ -77,6 +80,37 @@ fn write_log(log_content: String, verbose: bool, log_file_path: &PathBuf) {
     }
 
     LogItem::append_to_file(&log_item, &log_file_path, verbose);
+}
+
+fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
+    let now = chrono::prelude::Local::now();
+    let date = match date_str {
+        Some(date_str) => parse_date_from_str(&date_str),
+        // Default date is today
+        None => now.date_naive(),
+    };
+
+    let log_file_path = construct_log_file_path(log_dir_path, date);
+
+    // If the log file does not exist, create it
+    create_log_file_if_not_exists(&log_file_path, verbose);
+
+    if verbose {
+        let editor_path_res = edit::get_editor();
+        match editor_path_res {
+            Ok(editor_path) => {
+                println!("Opening editor: {}", editor_path.display());
+            }
+            Err(_) => {
+                println!("Can't find the editor");
+            }
+        }
+    }
+
+    let res = edit::edit_file(log_file_path);
+    if res.is_err() {
+        println!("Can't edit the file");
+    }
 }
 
 fn main() {
@@ -99,10 +133,10 @@ fn main() {
         cl_args::Commands::View { date, verbose } => {
             view_logs(date, verbose, log_dir_path);
         }
-        cl_args::Commands::Write { message, verbose } => {
-            let now = chrono::prelude::Local::now();
-            let log_file_path = log_dir_path.join(format!("{}.log", now.format("%Y-%m-%d")));
-            write_log(message, verbose, &log_file_path)
+        cl_args::Commands::Write { message, verbose } => write_log(message, verbose, &log_dir_path),
+        cl_args::Commands::Config { .. } => todo!(),
+        cl_args::Commands::Edit { date, verbose } => {
+            edit_logs(date, verbose, &log_dir_path);
         }
     }
 }
