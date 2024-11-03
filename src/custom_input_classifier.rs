@@ -24,6 +24,12 @@ impl InputClassifier for CustomInputClassifier {
             }) => Some(InputEvent::Exit),
             // Previous date
             Event::Key(KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            })
+            | 
+            Event::Key(KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -32,6 +38,12 @@ impl InputClassifier for CustomInputClassifier {
                 Some(InputEvent::RestorePrompt)
             }
             // Next date
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('l'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) 
+            |
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
@@ -42,11 +54,23 @@ impl InputClassifier for CustomInputClassifier {
             }
             // Previous line
             Event::Key(KeyEvent {
+                code: KeyCode::Char('k'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            })
+            |
+            Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_sub(1))),
             // Next line
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('j'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) 
+            |
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
