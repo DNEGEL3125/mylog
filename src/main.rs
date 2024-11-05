@@ -5,6 +5,7 @@ use std::{
 };
 
 use chrono::NaiveDate;
+use chrono::Datelike;
 use clap::Parser;
 use file_utils::create_log_file_if_not_exists;
 use log_config::{construct_log_file_path, LogConfig};
@@ -36,27 +37,46 @@ fn paging_log_file_by_date(log_dir_path: PathBuf, date: NaiveDate, verbose: bool
     pager_thread.join().unwrap().unwrap();
 }
 
-fn parse_date_from_str(date_str: &str) -> NaiveDate {
-    let date_fmt = "%Y-%m-%d";
-    let date = NaiveDate::parse_from_str(&date_str, &date_fmt);
-    if date.is_err() {
-        println!(
-            "Invalid date '{}', the date format should be '{}'",
-            date_str, date_fmt
-        );
-        exit(-101);
-    }
-
-    date.unwrap()
+fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
+    let err_msg_template = format!("Invalid date '{}'.", date_str);
+    let date_str_parts: Vec<&str> = date_str.split('-').collect();
+    let parts_count = date_str_parts.len();
+    let date = match parts_count {
+        2 => {
+            let today = chrono::Local::now().date_naive();
+            let month: u32 = date_str_parts[0].parse().map_err(|_| &err_msg_template)?;
+            let day: u32 = date_str_parts[1].parse().map_err(|_| &err_msg_template)?;
+            today.with_month(month)
+                .ok_or(&err_msg_template)?
+                .with_day(day)
+                .ok_or(&err_msg_template)?
+        }
+        3 => {
+            let date_fmt = "%Y-%m-%d";
+            NaiveDate::parse_from_str(&date_str, &date_fmt).map_err(|_| &err_msg_template)?
+        }
+        _ => {
+            return Err(err_msg_template)
+        }
+    };
+    Ok(date)
 }
 
 fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
     let now = chrono::prelude::Local::now();
 
-    let date = match date_str {
+    let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
         // Default date is today
-        None => now.date_naive(),
+        None => Ok(now.date_naive()),
+    };
+
+    let date = match date_result {
+        Ok(date) => date,
+        Err(msg) => {
+            println!("{}", msg);
+            exit(-966);
+        }
     };
 
     paging_log_file_by_date(log_dir_path, date, verbose);
@@ -84,10 +104,18 @@ fn write_log(log_content: String, verbose: bool, log_dir_path: &PathBuf) {
 
 fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
     let now = chrono::prelude::Local::now();
-    let date = match date_str {
+    let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
         // Default date is today
-        None => now.date_naive(),
+        None => Ok(now.date_naive()),
+    };
+
+    let date = match date_result {
+        Ok(date) => date,
+        Err(msg) => {
+            println!("{}", msg);
+            exit(-966);
+        }
     };
 
     let log_file_path = construct_log_file_path(log_dir_path, date);
