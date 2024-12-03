@@ -12,7 +12,8 @@ lazy_static! {
     static ref STORED_NUMBER: Mutex<String> = Mutex::new(String::new());
 }
 
-/// Returns and empties the stored number. This number is typically used to repeat the next operation multiple times.
+/// Returns and empties the stored number.
+/// This number is typically used to repeat the next operation multiple times.
 fn get_and_clear_stored_number() -> usize {
     let mut times_str = STORED_NUMBER.lock().unwrap();
     // Parse the string to integer
@@ -104,6 +105,17 @@ impl InputClassifier for CustomInputClassifier {
                 }
                 return None;
             }
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Esc,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                // Clear the stored number
+                STORED_NUMBER.lock().unwrap().clear();
+                return None;
+            }
+
             _ => None,
         }
     }
