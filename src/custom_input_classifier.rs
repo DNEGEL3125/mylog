@@ -9,6 +9,16 @@ use minus::PagerState;
 
 lazy_static! {
     pub static ref EVENT_EMITTER: Mutex<EventEmitter> = Mutex::new(EventEmitter::new());
+    static ref STORED_NUMBER: Mutex<String> = Mutex::new(String::new());
+}
+
+/// Returns and empties the stored number. This number is typically used to repeat the next operation multiple times.
+fn get_and_clear_stored_number() -> usize {
+    let mut times_str = STORED_NUMBER.lock().unwrap();
+    // Parse the string to integer
+    let times: usize = times_str.parse().unwrap_or(1);
+    times_str.clear();
+    times
 }
 
 pub struct CustomInputClassifier;
@@ -28,8 +38,7 @@ impl InputClassifier for CustomInputClassifier {
                 modifiers: KeyModifiers::NONE,
                 ..
             })
-            | 
-            Event::Key(KeyEvent {
+            | Event::Key(KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -42,9 +51,8 @@ impl InputClassifier for CustomInputClassifier {
                 code: KeyCode::Char('l'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) 
-            |
-            Event::Key(KeyEvent {
+            })
+            | Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -58,24 +66,44 @@ impl InputClassifier for CustomInputClassifier {
                 modifiers: KeyModifiers::NONE,
                 ..
             })
-            |
-            Event::Key(KeyEvent {
+            | Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_sub(1))),
+            }) => {
+                let times = get_and_clear_stored_number();
+                Some(InputEvent::UpdateUpperMark(
+                    ps.upper_mark.saturating_sub(times),
+                ))
+            }
             // Next line
             Event::Key(KeyEvent {
                 code: KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) 
-            |
-            Event::Key(KeyEvent {
+            })
+            | Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) => Some(InputEvent::UpdateUpperMark(ps.upper_mark.saturating_add(1))),
+            }) => {
+                let times = get_and_clear_stored_number();
+                Some(InputEvent::UpdateUpperMark(
+                    ps.upper_mark.saturating_add(times),
+                ))
+            }
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Char(char_code),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if char_code.is_digit(10) {
+                    STORED_NUMBER.lock().unwrap().push(char_code);
+                    return Some(InputEvent::Number(char_code));
+                }
+                return None;
+            }
             _ => None,
         }
     }
