@@ -8,7 +8,7 @@ pub enum Commands {
     Write {
         /// The message to write
         #[arg(help = "The content of the message you want to write.")]
-        message: String,
+        message: Option<String>,
 
         /// Print more output
         #[arg(short, long, action = clap::ArgAction::SetTrue, help = "Enable verbose mode.")]

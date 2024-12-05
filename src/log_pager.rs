@@ -91,19 +91,25 @@ impl LogPager {
         self.update_pager();
     }
 
-    fn colour_log_conetent(content: String, date_color: colored::Color) -> String {
+    fn colour_log_conetent(content: &String, date_color: colored::Color) -> String {
         let mut ret = String::new();
 
-        for line in content.lines().map(|x| x.to_owned()) {
+        for line in content.lines() {
             let idx = match line.find("]") {
                 Some(res) => res,
-                None => continue,
+                None => {
+                    ret.push_str(line);
+                    ret.push('\n');
+                    continue;
+                }
             };
             if !line.starts_with("[") {
+                ret.push_str(line);
+                ret.push('\n');
                 continue;
             }
 
-            let mut date_string = line;
+            let mut date_string = line.to_owned();
             let log_content = date_string.split_off(idx + 1);
 
             ret.push_str(&format!("{}{log_content}\n", date_string.color(date_color)));
@@ -125,7 +131,7 @@ impl LogPager {
             }
             String::new()
         };
-        let colored_content = Self::colour_log_conetent(file_content, colored::Color::Green);
+        let colored_content = Self::colour_log_conetent(&file_content, colored::Color::Green);
         self.set_text(&colored_content);
         let _ = self
             .pager
@@ -133,11 +139,11 @@ impl LogPager {
     }
 
     fn set_text(&self, s: &str) {
-        self.pager.set_text(s).expect("Can't show pager");
+        self.pager.set_text(s).expect("Can't open the pager");
     }
 
     fn _push_str(&self, s: impl Into<String>) {
-        self.pager.push_str(s).expect("Can't show pager");
+        self.pager.push_str(s).expect("Can't open the pager");
     }
 
     pub fn _start_paging(&mut self) {
