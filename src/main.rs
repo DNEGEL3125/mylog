@@ -44,10 +44,11 @@ fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: boo
             UserEvent::None => continue,
         }
 
-        log_pager.print_pager().expect("Print pager");
+        is_exit = is_exit && log_pager.print_pager().is_err();
     }
 
-    execute!(stdout(), terminal::LeaveAlternateScreen).expect("Unable to leave alternate screen");
+    crate::terminal_utils::restore_terminal().expect("Unable to restore the terminal");
+
     disable_raw_mode().expect("Unable to diable raw mode");
 }
 
