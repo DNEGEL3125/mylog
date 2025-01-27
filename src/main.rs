@@ -1,40 +1,83 @@
-use std::{
-    path::PathBuf,
-    process::exit,
-    sync::{Arc, Mutex},
-};
+use std::io::stdout;
+use std::{path::PathBuf, process::exit};
 
 use chrono::Datelike;
 use chrono::NaiveDate;
 use clap::Parser;
+use crossterm::event::KeyCode;
+use crossterm::terminal::disable_raw_mode;
+use crossterm::terminal::enable_raw_mode;
+use crossterm::{execute, terminal};
 use file_utils::create_log_file_if_not_exists;
 use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
+use user_event::UserEvent;
 
 pub mod cl_args;
-pub mod custom_input_classifier;
 pub mod file_utils;
 pub mod log_config;
 pub mod log_item;
 pub mod log_pager;
+pub mod terminal_utils;
+pub mod user_event;
 
-fn paging_log_file_by_date(log_dir_path: PathBuf, date: NaiveDate, verbose: bool) {
-    use std::thread;
-    let mut log_pager = LogPager::new(date, log_dir_path);
+fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: bool) {
+    enable_raw_mode().expect("Failed to enable raw mode");
+    execute!(stdout(), terminal::EnterAlternateScreen).expect("Unable to enter alternate screen");
+    let mut log_pager = LogPager::new(date, log_dir_path.to_owned());
     log_pager.set_verbose(verbose);
+    log_pager.print_pager().expect("Print pager");
 
-    let minus_pager = log_pager.pager().clone();
+    let mut is_exit = false;
+    while !is_exit {
+        let user_event = get_user_event();
 
-    let log_pager = Arc::new(Mutex::new(log_pager));
+        log_pager.clear_error_message();
+        match user_event {
+            UserEvent::NextDay => log_pager.next_day(),
+            UserEvent::PrevDay => log_pager.prev_day(),
+            UserEvent::NextLine => log_pager.next_line(),
+            UserEvent::PrevLine => log_pager.prev_line(),
+            UserEvent::Quit => is_exit = true,
+            UserEvent::Search => todo!(),
+            UserEvent::None => continue,
+        }
 
-    LogPager::init_input_classifier(&log_pager);
+        log_pager.print_pager().expect("Print pager");
+    }
 
-    // Run the pager
-    let pager_thread = thread::spawn(move || minus::dynamic_paging(minus_pager));
+    execute!(stdout(), terminal::LeaveAlternateScreen).expect("Unable to leave alternate screen");
+    disable_raw_mode().expect("Unable to diable raw mode");
+}
 
-    // Wait for it to finish
-    pager_thread.join().unwrap().unwrap();
+fn get_user_event() -> UserEvent {
+    match crossterm::event::read().expect("Unable to read events") {
+        crossterm::event::Event::FocusGained => {}
+        crossterm::event::Event::FocusLost => {}
+        crossterm::event::Event::Key(key_event) => {
+            if key_event.code == KeyCode::Char('j') {
+                return UserEvent::NextLine;
+            }
+            if key_event.code == KeyCode::Char('k') {
+                return UserEvent::PrevLine;
+            }
+            if key_event.code == KeyCode::Char('l') {
+                return UserEvent::NextDay;
+            }
+            if key_event.code == KeyCode::Char('h') {
+                return UserEvent::PrevDay;
+            }
+            if key_event.code == KeyCode::Char('q') {
+                return UserEvent::Quit;
+            }
+        }
+        crossterm::event::Event::Mouse(_mouse_event) => {}
+        crossterm::event::Event::Paste(_) => {}
+        crossterm::event::Event::Resize(_, _) => {}
+    }
+
+    return UserEvent::None;
 }
 
 fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
@@ -78,7 +121,7 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
         }
     };
 
-    paging_log_file_by_date(log_dir_path, date, verbose);
+    paging_log_file_by_date(&log_dir_path, date, verbose);
 }
 
 fn write_log(log_content: String, verbose: bool, log_dir_path: &PathBuf) {
@@ -89,11 +132,7 @@ fn write_log(log_content: String, verbose: bool, log_dir_path: &PathBuf) {
     // If the log file does not exist, create it
     create_log_file_if_not_exists(&log_file_path, verbose);
 
-    let log_item = LogItem {
-        date_time: now.naive_local(),
-        content: log_content,
-    };
-
+    let log_item = LogItem::new(now.naive_local(), log_content);
     if verbose {
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
