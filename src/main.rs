@@ -7,7 +7,6 @@ use clap::Parser;
 use crossterm::terminal::disable_raw_mode;
 use crossterm::terminal::enable_raw_mode;
 use crossterm::{execute, terminal};
-use file_utils::create_log_file_if_not_exists;
 use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
@@ -101,7 +100,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
     let log_file_path = construct_log_file_path(log_dir_path, now.date_naive());
 
     // If the log file does not exist, create it
-    create_log_file_if_not_exists(&log_file_path, verbose);
+    let _ = std::fs::File::create_new(&log_file_path);
 
     let log_item = LogItem::new(now.naive_local(), log_content);
     if verbose {
@@ -130,7 +129,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
     let log_file_path = construct_log_file_path(log_dir_path, date);
 
     // If the log file does not exist, create it
-    create_log_file_if_not_exists(&log_file_path, verbose);
+    let _ = std::fs::File::create_new(&log_file_path);
 
     if verbose {
         let editor_path_res = edit::get_editor();

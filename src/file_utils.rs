@@ -2,7 +2,6 @@ use std::{
     fs::{File, OpenOptions},
     io::Read,
     path::PathBuf,
-    process::exit,
 };
 
 /// Creates a unique temporary file in the system's temporary directory.
@@ -38,28 +37,6 @@ pub fn get_file_content_by_path(file_path: &PathBuf) -> String {
         .expect("Can't read the file");
 
     return content;
-}
-
-pub fn create_log_file_if_not_exists(log_file_path: &PathBuf, verbose: bool) {
-    if log_file_path.exists() {
-        if verbose {
-            println!("Found log file '{}'", log_file_path.display());
-        }
-        return;
-    }
-
-    if verbose {
-        println!("Creating log file");
-    }
-
-    let result = File::create(log_file_path);
-    if result.is_err() {
-        println!("Can't create the log file.");
-        if verbose {
-            println!("{}", result.err().unwrap());
-        }
-        exit(-3034);
-    }
 }
 
 pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<usize> {
