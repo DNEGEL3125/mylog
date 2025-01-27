@@ -58,3 +58,37 @@ pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<u
 
     io::Write::write(&mut file, line.as_bytes()) // Write the line with a newline at the end
 }
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_gen_temp_file_path() {
+        use super::gen_temp_file_path;
+        use std::collections::HashSet;
+        use std::path::PathBuf;
+
+        let num_files_gen = 1000;
+        let mut file_path_set: HashSet<PathBuf> = HashSet::new();
+
+        // Generate a large number of temporary file paths and check for uniqueness.
+        for _ in 0..num_files_gen {
+            let file_path = gen_temp_file_path();
+            // Attempt to create the file. This will fail if the path already exists,
+            // which would indicate a collision in the generated paths.
+            std::fs::File::create_new(&file_path)
+                .expect("The file already exists, indicating a path collision.");
+            // Check if the generated path is unique. The insert method returns true if the
+            // element was not already present in the set.
+            assert!(
+                file_path_set.insert(file_path.clone()),
+                "Generated duplicate file path: {:?}",
+                file_path
+            );
+        }
+
+        // Clean up the created temporary files.
+        for file_path in file_path_set {
+            std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
+        }
+    }
+}
