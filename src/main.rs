@@ -199,15 +199,13 @@ fn main() {
 /// # Errors
 /// Panics if there is an issue creating, reading, or editing the temporary file.
 fn input_log_message() -> String {
-    use std::env;
     use std::fs::{self, File};
     use std::io::{Read, Write};
 
     use edit::edit_file;
 
     // Create a temporary file
-    let temp_dir = env::temp_dir();
-    let temp_file_path = temp_dir.join("temp_log_message.txt");
+    let temp_file_path = crate::file_utils::gen_temp_file_path();
     let mut temp_file =
         File::create(&temp_file_path).expect("Failed to create a temporary file for editing");
 

@@ -1,5 +1,19 @@
 use std::{fs::File, io::Read, path::PathBuf, process::exit};
 
+pub fn gen_temp_file_path() -> PathBuf {
+    use std::env;
+    let temp_dir = env::temp_dir();
+    let mut i: usize = 0;
+    let suffix = "mylogtmp";
+    let mut temp_file_path: PathBuf = temp_dir.join(suffix);
+    while temp_file_path.exists() {
+        let filename = format!("{}{}", suffix, i);
+        temp_file_path = temp_dir.join(filename);
+        i += 1;
+    }
+    temp_file_path
+}
+
 pub fn get_file_content_by_path(file_path: &PathBuf) -> String {
     // Open the file
     let mut file = File::open(file_path).expect("Can't open the file");
