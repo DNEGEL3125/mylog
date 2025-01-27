@@ -124,7 +124,7 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
     paging_log_file_by_date(&log_dir_path, date, verbose);
 }
 
-fn write_log(log_content: String, verbose: bool, log_dir_path: &PathBuf) {
+fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
     let now = chrono::prelude::Local::now();
 
     let log_file_path = construct_log_file_path(log_dir_path, now.date_naive());
@@ -210,7 +210,7 @@ fn main() {
                 println!("Aborting due to empty log message.");
                 exit(-9320);
             }
-            write_log(message_string, verbose, &log_dir_path);
+            write_log(&message_string, verbose, &log_dir_path);
         }
         cl_args::Commands::Config { .. } => todo!(),
         cl_args::Commands::Edit { date, verbose } => {

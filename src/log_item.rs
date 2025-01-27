@@ -53,7 +53,7 @@ impl FromStr for LogItem {
         match chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M") {
             Ok(date_time_result) => {
                 let log_content = s[idx + 1..].to_owned();
-                return Ok(LogItem::new(date_time_result, log_content));
+                return Ok(LogItem::new(date_time_result, &log_content));
             }
             Err(_) => {
                 return Err(ParseError::DateNotFound);
@@ -63,8 +63,8 @@ impl FromStr for LogItem {
 }
 
 impl LogItem {
-    pub fn new(date_time: NaiveDateTime, content: String) -> Self {
-        Self { date_time, content }
+    pub fn new(date_time: NaiveDateTime, content: &str) -> Self {
+        Self { date_time, content: content.trim().to_owned() }
     }
 
     pub fn content(&self) -> &str {
