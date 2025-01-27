@@ -205,9 +205,7 @@ fn input_log_message() -> String {
     use edit::edit_file;
 
     // Create a temporary file
-    let temp_file_path = crate::file_utils::gen_temp_file_path();
-    let mut temp_file =
-        File::create(&temp_file_path).expect("Failed to create a temporary file for editing");
+    let (mut temp_file, temp_file_path) = crate::file_utils::create_unique_temp_file();
 
     // Optionally add an initial message
     writeln!(

@@ -1,17 +1,32 @@
-use std::{fs::File, io::Read, path::PathBuf, process::exit};
+use std::{
+    fs::{File, OpenOptions},
+    io::Read,
+    path::PathBuf,
+    process::exit,
+};
 
-pub fn gen_temp_file_path() -> PathBuf {
-    use std::env;
-    let temp_dir = env::temp_dir();
-    let mut i: usize = 0;
+/// Creates a unique temporary file in the system's temporary directory.
+/// Returns the file handle and the file path.
+pub fn create_unique_temp_file() -> (File, PathBuf) {
+    let temp_dir = std::env::temp_dir();
     let suffix = "mylogtmp";
-    let mut temp_file_path: PathBuf = temp_dir.join(suffix);
-    while temp_file_path.exists() {
+
+    for i in 0.. {
         let filename = format!("{}{}", suffix, i);
-        temp_file_path = temp_dir.join(filename);
-        i += 1;
+        let temp_file_path = temp_dir.join(&filename);
+
+        // Attempt to create the file atomically
+        match OpenOptions::new()
+            .create_new(true) // Ensures atomic file creation
+            .write(true)
+            .open(&temp_file_path)
+        {
+            Ok(file) => return (file, temp_file_path), // Return the file and its path
+            Err(_) => continue, // File exists or other error, try the next iteration
+        }
     }
-    temp_file_path
+
+    unreachable!("Ran out of unique temporary file names");
 }
 
 pub fn get_file_content_by_path(file_path: &PathBuf) -> String {
@@ -62,8 +77,8 @@ pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<u
 #[cfg(test)]
 mod test {
     #[test]
-    fn test_gen_temp_file_path() {
-        use super::gen_temp_file_path;
+    fn test_create_unique_temp_file() {
+        use super::create_unique_temp_file;
         use std::collections::HashSet;
         use std::path::PathBuf;
 
@@ -72,11 +87,8 @@ mod test {
 
         // Generate a large number of temporary file paths and check for uniqueness.
         for _ in 0..num_files_gen {
-            let file_path = gen_temp_file_path();
-            // Attempt to create the file. This will fail if the path already exists,
-            // which would indicate a collision in the generated paths.
-            std::fs::File::create_new(&file_path)
-                .expect("The file already exists, indicating a path collision.");
+            let (_, file_path) = create_unique_temp_file();
+            assert!(file_path.exists());
             // Check if the generated path is unique. The insert method returns true if the
             // element was not already present in the set.
             assert!(
@@ -94,11 +106,10 @@ mod test {
 
     #[test]
     fn test_get_file_content_by_path() {
-        use super::{gen_temp_file_path, get_file_content_by_path};
+        use super::{create_unique_temp_file, get_file_content_by_path};
         use std::io::Write;
-        let file_path = gen_temp_file_path();
-        let mut output_file = std::fs::File::create_new(&file_path)
-            .expect("The file already exists, indicating a path collision.");
+        let (mut output_file, file_path) = create_unique_temp_file();
+
         let file_content = r#"The darkest valley
             The highest mountain
             We walk in the name of our brave
