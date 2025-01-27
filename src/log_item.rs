@@ -182,15 +182,6 @@ impl FromStr for LogItemList {
 }
 
 impl LogItemList {
-    pub fn lines(&self) -> Vec<String> {
-        let mut ret: Vec<String> = Vec::new();
-        for item in &self.items {
-            ret.extend(item.content.lines().map(|x| x.to_owned()));
-        }
-
-        ret
-    }
-
     pub fn iter(&self) -> std::slice::Iter<'_, LogItem> {
         self.items.iter()
     }
