@@ -4,7 +4,6 @@ use std::{path::PathBuf, process::exit};
 use chrono::Datelike;
 use chrono::NaiveDate;
 use clap::Parser;
-use crossterm::event::KeyCode;
 use crossterm::terminal::disable_raw_mode;
 use crossterm::terminal::enable_raw_mode;
 use crossterm::{execute, terminal};
@@ -12,7 +11,7 @@ use file_utils::create_log_file_if_not_exists;
 use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
-use user_event::UserEvent;
+use user_event::{get_user_event, UserEvent};
 
 pub mod cl_args;
 pub mod file_utils;
@@ -50,35 +49,6 @@ fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: boo
     crate::terminal_utils::restore_terminal().expect("Unable to restore the terminal");
 
     disable_raw_mode().expect("Unable to diable raw mode");
-}
-
-fn get_user_event() -> UserEvent {
-    match crossterm::event::read().expect("Unable to read events") {
-        crossterm::event::Event::FocusGained => {}
-        crossterm::event::Event::FocusLost => {}
-        crossterm::event::Event::Key(key_event) => {
-            if key_event.code == KeyCode::Char('j') {
-                return UserEvent::NextLine;
-            }
-            if key_event.code == KeyCode::Char('k') {
-                return UserEvent::PrevLine;
-            }
-            if key_event.code == KeyCode::Char('l') {
-                return UserEvent::NextDay;
-            }
-            if key_event.code == KeyCode::Char('h') {
-                return UserEvent::PrevDay;
-            }
-            if key_event.code == KeyCode::Char('q') {
-                return UserEvent::Quit;
-            }
-        }
-        crossterm::event::Event::Mouse(_mouse_event) => {}
-        crossterm::event::Event::Paste(_) => {}
-        crossterm::event::Event::Resize(_, _) => {}
-    }
-
-    return UserEvent::None;
 }
 
 fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
