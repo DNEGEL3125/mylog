@@ -43,7 +43,7 @@ fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: boo
             UserEvent::None => continue,
         }
 
-        is_exit = is_exit && log_pager.print_pager().is_err();
+        is_exit = is_exit || log_pager.print_pager().is_err();
     }
 
     crate::terminal_utils::restore_terminal().expect("Unable to restore the terminal");
