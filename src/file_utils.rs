@@ -91,4 +91,28 @@ mod test {
             std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
         }
     }
+
+    #[test]
+    fn test_get_file_content_by_path() {
+        use super::{gen_temp_file_path, get_file_content_by_path};
+        use std::io::Write;
+        let file_path = gen_temp_file_path();
+        let mut output_file = std::fs::File::create_new(&file_path)
+            .expect("The file already exists, indicating a path collision.");
+        let file_content = r#"The darkest valley
+            The highest mountain
+            We walk in the name of our brave
+            The rushing river, the blooming flower
+            Descended from heaven we embrace"#;
+
+        output_file
+            .write_all(file_content.as_bytes())
+            .expect(&format!("Unable to write the file {:?}", file_path));
+        std::mem::drop(output_file);
+
+        assert_eq!(get_file_content_by_path(&file_path), file_content);
+
+        // Clean up the created temporary file.
+        std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
+    }
 }
