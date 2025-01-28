@@ -1,6 +1,6 @@
 use clap::{command, Subcommand};
 
-use crate::constants::PKG_NAME;
+use crate::constants::{PKG_NAME, PKG_VERSION};
 
 // "Path to the output file or directory. Errors if the path doesn't exist. Uses the file if it's a file; creates/uses a log file in the directory if it's a directory."
 
@@ -55,7 +55,7 @@ pub enum Commands {
 
 #[derive(clap::Parser)]
 #[command(name = PKG_NAME)]
-#[command(version = "1.0")]
+#[command(version = PKG_VERSION)]
 #[command(about = "A logger tool for keeping a diary.", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
