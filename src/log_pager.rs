@@ -12,6 +12,7 @@ use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
 use crate::utils::fs::get_file_content_by_path;
 use crate::utils::terminal::{get_terminal_total_cols, get_terminal_total_rows};
+use crate::utils::time::get_today_date;
 
 pub struct LogPager {
     date: NaiveDate,
@@ -21,10 +22,6 @@ pub struct LogPager {
     page_log_line_range_begin: usize,
     bottom_message: StyledContent<String>,
     log_item_list: LogItemList,
-}
-
-fn get_today_date() -> NaiveDate {
-    return chrono::prelude::Local::now().date_naive();
 }
 
 impl LogPager {

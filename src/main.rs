@@ -11,6 +11,7 @@ use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
 use user_event::{get_user_event, UserEvent};
+use utils::time::get_today_date;
 
 pub mod args;
 pub mod constants;
@@ -56,7 +57,7 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
     let parts_count = date_str_parts.len();
     let date = match parts_count {
         2 => {
-            let today = chrono::Local::now().date_naive();
+            let today = get_today_date();
             let month: u32 = date_str_parts[0].parse().map_err(|_| &err_msg_template)?;
             let day: u32 = date_str_parts[1].parse().map_err(|_| &err_msg_template)?;
             today
