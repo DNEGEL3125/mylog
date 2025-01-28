@@ -23,13 +23,13 @@ impl Default for LogConfig {
 
 impl LogConfig {
     pub fn create_config_file_if_not_exists() {
-        let config_dir_path = &CONFIG_DIR_PATH;
-        let config_file_path = &CONFIG_FILE_PATH;
+        let config_dir_path: &PathBuf = &CONFIG_DIR_PATH;
+        let config_file_path: &PathBuf = &CONFIG_FILE_PATH;
         if config_file_path.exists() {
             return;
         }
-        create_dir_all(config_dir_path.as_path()).expect("Can't create config file");
-        let file = File::create(config_file_path.as_path()).expect("Can't create config file");
+        create_dir_all(config_dir_path).expect("Can't create config file");
+        let file = File::create(config_file_path).expect("Can't create config file");
         LogConfig::default().write_to_file(&file);
     }
 
