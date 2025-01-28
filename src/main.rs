@@ -13,7 +13,7 @@ use log_pager::LogPager;
 use user_event::{get_user_event, UserEvent};
 use utils::time::get_today_date;
 
-pub mod args;
+pub mod cli;
 pub mod constants;
 pub mod log_config;
 pub mod log_item;
@@ -166,12 +166,12 @@ fn main() {
     }
 
     // Command line parameters
-    let cli = args::Cli::parse();
+    let cli = cli::Cli::parse();
     match cli.command {
-        args::Commands::View { date, verbose } => {
+        cli::Commands::View { date, verbose } => {
             view_logs(date, verbose, &log_dir_path);
         }
-        args::Commands::Write { message, verbose } => {
+        cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
                 message_string
             } else {
@@ -184,8 +184,8 @@ fn main() {
             }
             write_log(&message_string, verbose, &log_dir_path);
         }
-        args::Commands::Config { .. } => todo!(),
-        args::Commands::Edit { date, verbose } => {
+        cli::Commands::Config { .. } => todo!(),
+        cli::Commands::Edit { date, verbose } => {
             edit_logs(date, verbose, &log_dir_path);
         }
     }
