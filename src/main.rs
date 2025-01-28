@@ -159,7 +159,7 @@ fn main() {
     if !log_dir_path.exists() {
         println!(
             "The log directory doesn't exist.\nYou may want to configure it in '{}'",
-            log_config::CONFIG_FILE_PATH.display()
+            crate::constants::CONFIG_FILE_PATH.display()
         );
         exit(1);
     }

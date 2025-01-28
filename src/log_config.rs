@@ -1,6 +1,4 @@
 use chrono::NaiveDate;
-use dirs::home_dir;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
@@ -8,15 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::constants::PKG_NAME; // You may need to add the `dirs` crate to your `Cargo.toml`
-
-lazy_static! {
-    pub static ref CONFIG_DIR_PATH: PathBuf = home_dir()
-        .expect("Home directory not found!")
-        .join(".config")
-        .join(PKG_NAME);
-    pub static ref CONFIG_FILE_PATH: PathBuf = CONFIG_DIR_PATH.join("conf.toml");
-}
+use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
 
 #[derive(Deserialize, Serialize)]
 pub struct LogConfig {
@@ -33,11 +23,13 @@ impl Default for LogConfig {
 
 impl LogConfig {
     pub fn create_config_file_if_not_exists() {
-        if CONFIG_FILE_PATH.exists() {
+        let config_dir_path = &CONFIG_DIR_PATH;
+        let config_file_path = &CONFIG_FILE_PATH;
+        if config_file_path.exists() {
             return;
         }
-        create_dir_all(CONFIG_DIR_PATH.clone()).expect("Can't create config file");
-        let file = File::create(CONFIG_FILE_PATH.clone()).expect("Can't create config file");
+        create_dir_all(config_dir_path.as_path()).expect("Can't create config file");
+        let file = File::create(config_file_path.as_path()).expect("Can't create config file");
         LogConfig::default().write_to_file(&file);
     }
 

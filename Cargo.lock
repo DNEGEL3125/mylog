@@ -422,7 +422,6 @@ dependencies = [
  "dirs",
  "edit",
  "event-emitter-rs",
- "lazy_static",
  "serde",
  "textwrap",
  "toml",
