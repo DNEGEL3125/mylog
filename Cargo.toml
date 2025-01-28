@@ -11,8 +11,7 @@ clap = { version = "4.5.19", features = ["derive"] }
 crossterm = "0.28.1"
 dirs = "5.0.1"
 edit = "0.1.5"
-event-emitter-rs = "0.1.4"
-serde = "1.0.210"
+serde = { version = "1.0.210", features = ["derive"] }
 textwrap = "0.16.1"
 toml = "0.8.19"
 
