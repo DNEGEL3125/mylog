@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, File},
     io::{Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
@@ -33,8 +33,8 @@ impl LogConfig {
         LogConfig::default().write_to_file(&file);
     }
 
-    pub fn from_config_file() -> LogConfig {
-        let mut file = File::open(CONFIG_FILE_PATH.clone()).expect("Can't create the config file");
+    pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> LogConfig {
+        let mut file = File::open(file_path).expect("Can't create the config file");
         let mut content = String::new();
         file.read_to_string(&mut content)
             .expect("Can't read the config file");

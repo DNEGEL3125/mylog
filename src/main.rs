@@ -152,14 +152,14 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
 
 fn main() {
     LogConfig::create_config_file_if_not_exists();
-    let log_config = log_config::LogConfig::from_config_file();
-    // let log_dir_path = PathBuf::from("/Users/dnegel3125/Documents/.private/MyLogs");
+    let config_file_path = &crate::constants::CONFIG_FILE_PATH;
+    let log_config = log_config::LogConfig::from_config_file(config_file_path.as_path());
     let log_dir_path = log_config.log_dir_path;
 
     if !log_dir_path.exists() {
         println!(
             "The log directory doesn't exist.\nYou may want to configure it in '{}'",
-            crate::constants::CONFIG_FILE_PATH.display()
+            config_file_path.display()
         );
         exit(1);
     }
