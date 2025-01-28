@@ -12,7 +12,7 @@ use log_item::LogItem;
 use log_pager::LogPager;
 use user_event::{get_user_event, UserEvent};
 
-pub mod cl_args;
+pub mod args;
 pub mod constants;
 pub mod file_utils;
 pub mod log_config;
@@ -165,12 +165,12 @@ fn main() {
     }
 
     // Command line parameters
-    let cli = cl_args::Cli::parse();
+    let cli = args::Cli::parse();
     match cli.command {
-        cl_args::Commands::View { date, verbose } => {
+        args::Commands::View { date, verbose } => {
             view_logs(date, verbose, log_dir_path);
         }
-        cl_args::Commands::Write { message, verbose } => {
+        args::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
                 message_string
             } else {
@@ -183,8 +183,8 @@ fn main() {
             }
             write_log(&message_string, verbose, &log_dir_path);
         }
-        cl_args::Commands::Config { .. } => todo!(),
-        cl_args::Commands::Edit { date, verbose } => {
+        args::Commands::Config { .. } => todo!(),
+        args::Commands::Edit { date, verbose } => {
             edit_logs(date, verbose, &log_dir_path);
         }
     }
