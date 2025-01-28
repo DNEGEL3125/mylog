@@ -64,7 +64,10 @@ impl FromStr for LogItem {
 
 impl LogItem {
     pub fn new(date_time: NaiveDateTime, content: &str) -> Self {
-        Self { date_time, content: content.trim().to_owned() }
+        Self {
+            date_time,
+            content: content.trim().to_owned(),
+        }
     }
 
     pub fn content(&self) -> &str {
@@ -84,10 +87,6 @@ impl LogItem {
             })
             .collect()
     }
-
-    // pub fn content_total_lines(&self) -> usize {
-    //     self.content_total_lines
-    // }
 
     pub fn append_to_file(&self, log_file_path: &PathBuf, verbose: bool) {
         let result = append_line_to_file(log_file_path, &self.to_string());

@@ -6,12 +6,15 @@ use std::{
     fs::{create_dir_all, File},
     io::{Read, Write},
     path::PathBuf,
-}; // You may need to add the `dirs` crate to your `Cargo.toml`
+};
+
+use crate::constants::PKG_NAME; // You may need to add the `dirs` crate to your `Cargo.toml`
 
 lazy_static! {
     pub static ref CONFIG_DIR_PATH: PathBuf = home_dir()
         .expect("Home directory not found!")
-        .join(".config/mylog");
+        .join(".config")
+        .join(PKG_NAME);
     pub static ref CONFIG_FILE_PATH: PathBuf = CONFIG_DIR_PATH.join("conf.toml");
 }
 

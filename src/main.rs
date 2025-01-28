@@ -13,6 +13,7 @@ use log_pager::LogPager;
 use user_event::{get_user_event, UserEvent};
 
 pub mod cl_args;
+pub mod constants;
 pub mod file_utils;
 pub mod log_config;
 pub mod log_item;

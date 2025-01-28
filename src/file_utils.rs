@@ -4,11 +4,13 @@ use std::{
     path::PathBuf,
 };
 
+use crate::constants::PKG_NAME;
+
 /// Creates a unique temporary file in the system's temporary directory.
 /// Returns the file handle and the file path.
 pub fn create_unique_temp_file() -> (File, PathBuf) {
     let temp_dir = std::env::temp_dir();
-    let suffix = "mylogtmp";
+    let suffix = format!("{}tmp", PKG_NAME);
 
     for i in 0.. {
         let filename = format!("{}{}", suffix, i);
