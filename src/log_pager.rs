@@ -8,10 +8,10 @@ use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, S
 use crossterm::terminal::Clear;
 use crossterm::{cursor, queue};
 
-use crate::file_utils::get_file_content_by_path;
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
-use crate::terminal_utils::get_terminal_total_rows;
+use crate::utils::fs::get_file_content_by_path;
+use crate::utils::terminal::{get_terminal_total_cols, get_terminal_total_rows};
 
 pub struct LogPager {
     date: NaiveDate,
@@ -212,7 +212,7 @@ impl LogPager {
     fn split_colored_log_content_to_lines(&self) -> Vec<String> {
         let mut ret: Vec<String> = Vec::new();
         // Get the terminal's total column width.
-        let terminal_total_cols = crate::terminal_utils::get_terminal_total_cols() as usize;
+        let terminal_total_cols = get_terminal_total_cols() as usize;
 
         for item in self.log_item_list.iter() {
             for line in item.to_colored_string().lines() {

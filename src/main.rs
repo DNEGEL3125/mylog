@@ -14,12 +14,11 @@ use user_event::{get_user_event, UserEvent};
 
 pub mod args;
 pub mod constants;
-pub mod file_utils;
 pub mod log_config;
 pub mod log_item;
 pub mod log_pager;
-pub mod terminal_utils;
 pub mod user_event;
+pub mod utils;
 
 fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: bool) {
     enable_raw_mode().expect("Failed to enable raw mode");
@@ -46,7 +45,7 @@ fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: boo
         is_exit = is_exit || log_pager.print_pager().is_err();
     }
 
-    crate::terminal_utils::restore_terminal().expect("Unable to restore the terminal");
+    crate::utils::terminal::restore_terminal().expect("Unable to restore the terminal");
 
     disable_raw_mode().expect("Unable to diable raw mode");
 }
@@ -205,7 +204,7 @@ fn input_log_message() -> String {
     use edit::edit_file;
 
     // Create a temporary file
-    let (mut temp_file, temp_file_path) = crate::file_utils::create_unique_temp_file();
+    let (mut temp_file, temp_file_path) = crate::utils::fs::create_unique_temp_file();
 
     // Optionally add an initial message
     writeln!(

@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::exit, str::FromStr};
 use chrono::NaiveDateTime;
 use crossterm::style::Stylize;
 
-use crate::file_utils::append_line_to_file;
+use crate::utils::fs::append_line_to_file;
 
 pub enum ParseError {
     DateNotFound,

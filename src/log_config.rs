@@ -61,7 +61,7 @@ mod test {
 
     #[test]
     fn test_loading_and_generating_config_file() {
-        let (test_config_file, file_path) = crate::file_utils::create_unique_temp_file();
+        let (test_config_file, file_path) = crate::utils::fs::create_unique_temp_file();
         let mut log_config = LogConfig::default();
         log_config.log_dir_path = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
