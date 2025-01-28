@@ -158,7 +158,8 @@ fn main() {
 
     if !log_dir_path.exists() {
         println!(
-            "The log directory doesn't exist.\nYou may want to configure it in '{}'",
+            "The log directory '{}' doesn't exist.\nYou may want to configure it in '{}'",
+            log_dir_path.display(),
             config_file_path.display()
         );
         exit(1);
