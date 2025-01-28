@@ -8,7 +8,7 @@ use std::{
 
 use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, PartialEq, Debug)]
 pub struct LogConfig {
     pub log_dir_path: PathBuf,
 }
@@ -53,4 +53,20 @@ pub fn construct_log_file_path(log_dir_path: &PathBuf, date: NaiveDate) -> PathB
     let date_string = date.format("%Y-%m-%d").to_string();
     let filename = format!("{}.log", date_string);
     log_dir_path.join(filename)
+}
+
+#[cfg(test)]
+mod test {
+    use super::LogConfig;
+
+    #[test]
+    fn test_loading_and_generating_config_file() {
+        let (test_config_file, file_path) = crate::file_utils::create_unique_temp_file();
+        let mut log_config = LogConfig::default();
+        log_config.log_dir_path = "/var/log/mylog".into();
+        log_config.write_to_file(&test_config_file);
+        std::mem::drop(test_config_file);
+        assert_eq!(log_config, LogConfig::from_config_file(&file_path));
+        std::fs::remove_file(&file_path).expect("Unable to delete the file");
+    }
 }
