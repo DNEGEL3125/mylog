@@ -75,7 +75,7 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
     Ok(date)
 }
 
-fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
+fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
     let now = chrono::prelude::Local::now();
 
     let date_result = match date_str {
@@ -92,7 +92,7 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: PathBuf) {
         }
     };
 
-    paging_log_file_by_date(&log_dir_path, date, verbose);
+    paging_log_file_by_date(log_dir_path, date, verbose);
 }
 
 fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
@@ -168,7 +168,7 @@ fn main() {
     let cli = args::Cli::parse();
     match cli.command {
         args::Commands::View { date, verbose } => {
-            view_logs(date, verbose, log_dir_path);
+            view_logs(date, verbose, &log_dir_path);
         }
         args::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
