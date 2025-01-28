@@ -11,7 +11,7 @@ use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::LogPager;
 use user_event::{get_user_event, UserEvent};
-use utils::time::get_today_date;
+use utils::time::{date_time_now, get_today_date};
 
 pub mod cli;
 pub mod constants;
@@ -76,12 +76,12 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
 }
 
 fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
-    let now = chrono::prelude::Local::now();
+    let today_date = get_today_date();
 
     let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
         // Default date is today
-        None => Ok(now.date_naive()),
+        None => Ok(today_date),
     };
 
     let date = match date_result {
@@ -96,14 +96,15 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
 }
 
 fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
-    let now = chrono::prelude::Local::now();
+    let date_time_now = date_time_now();
+    let today_date = date_time_now.date();
 
-    let log_file_path = construct_log_file_path(log_dir_path, now.date_naive());
+    let log_file_path = construct_log_file_path(log_dir_path, today_date);
 
     // If the log file does not exist, create it
     let _ = std::fs::File::create_new(&log_file_path);
 
-    let log_item = LogItem::new(now.naive_local(), log_content);
+    let log_item = LogItem::new(date_time_now, log_content);
     if verbose {
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
@@ -112,11 +113,11 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
 }
 
 fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
-    let now = chrono::prelude::Local::now();
+    let today_date = get_today_date();
     let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
         // Default date is today
-        None => Ok(now.date_naive()),
+        None => Ok(today_date),
     };
 
     let date = match date_result {
