@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::exit, str::FromStr};
 use chrono::NaiveDateTime;
 use crossterm::style::Stylize;
 
-use crate::{file_utils::append_line_to_file, terminal_utils};
+use crate::file_utils::append_line_to_file;
 
 pub enum ParseError {
     DateNotFound,
@@ -64,20 +64,6 @@ impl LogItem {
 
     pub fn content(&self) -> &str {
         &self.content
-    }
-
-    pub fn lines(&self) -> Vec<String> {
-        let terminal_total_cols = terminal_utils::get_terminal_total_cols();
-        self.content
-            .lines()
-            .flat_map(|line| {
-                line.chars()
-                    .collect::<Vec<char>>()
-                    .chunks(terminal_total_cols.into())
-                    .map(|x| String::from_iter(x.iter()))
-                    .collect::<Vec<_>>()
-            })
-            .collect()
     }
 
     pub fn append_to_file(&self, log_file_path: &PathBuf, verbose: bool) {
