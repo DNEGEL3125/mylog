@@ -1,15 +1,7 @@
-use std::{
-    io::{self, Stdout},
-    path::PathBuf,
-    process::exit,
-    str::FromStr,
-};
+use std::{path::PathBuf, process::exit, str::FromStr};
 
 use chrono::NaiveDateTime;
-use crossterm::{
-    queue,
-    style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize},
-};
+use crossterm::style::Stylize;
 
 use crate::{file_utils::append_line_to_file, terminal_utils};
 
@@ -115,26 +107,6 @@ impl LogItem {
     pub fn to_colored_string(&self) -> String {
         let date_str = format!("[{}]", self.date_time.format("%Y-%m-%d %H:%M"));
         format!("{} {}", date_str.green(), self.content)
-    }
-
-    pub fn print_styled_content(
-        &self,
-        stdout: &mut Stdout,
-        range_begin: usize,
-        range_end: usize,
-    ) -> Result<(), io::Error> {
-        let content_lines: Vec<String> = self.lines();
-        assert!(range_begin < range_end && range_end <= content_lines.len());
-
-        let date_time_content_style = ContentStyle::new().green();
-        let date_time_str = format!("[{}]", self.date_time);
-        let date_time_styled_content = StyledContent::new(date_time_content_style, date_time_str);
-        queue!(stdout, PrintStyledContent(date_time_styled_content))?;
-        for i in range_begin..range_end {
-            queue!(stdout, Print(&content_lines[i]))?;
-        }
-
-        Ok(())
     }
 }
 
