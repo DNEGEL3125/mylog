@@ -5,11 +5,12 @@ use std::str::FromStr;
 
 use chrono::{Datelike, Days, NaiveDate};
 use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize};
-use crossterm::terminal::Clear;
-use crossterm::{cursor, queue};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
+use crossterm::{cursor, execute, queue};
 
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
+use crate::user_event::{get_user_event, UserEvent};
 use crate::utils::fs::get_file_content_by_path;
 use crate::utils::terminal::{get_terminal_total_cols, get_terminal_total_rows};
 use crate::utils::time::get_today_date;
@@ -221,5 +222,34 @@ impl LogPager {
             }
         }
         ret
+    }
+
+    pub fn run(&mut self) {
+        enable_raw_mode().expect("Failed to enable raw mode");
+        execute!(stdout(), crossterm::terminal::EnterAlternateScreen)
+            .expect("Unable to enter alternate screen");
+        self.print_pager().expect("Print pager");
+
+        let mut is_exit = false;
+        while !is_exit {
+            let user_event = get_user_event();
+
+            self.clear_error_message();
+            match user_event {
+                UserEvent::NextDay => self.next_day(),
+                UserEvent::PrevDay => self.prev_day(),
+                UserEvent::NextLine => self.next_line(),
+                UserEvent::PrevLine => self.prev_line(),
+                UserEvent::Quit => is_exit = true,
+                UserEvent::Search => todo!(),
+                UserEvent::None => continue,
+            }
+
+            is_exit = is_exit || self.print_pager().is_err();
+        }
+
+        crate::utils::terminal::restore_terminal().expect("Unable to restore the terminal");
+
+        disable_raw_mode().expect("Unable to diable raw mode");
     }
 }
