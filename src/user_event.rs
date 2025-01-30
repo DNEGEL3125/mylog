@@ -5,6 +5,7 @@ pub enum UserEvent {
     PrevLine,
     Quit,
     Search,
+    Resize(u16, u16),
     None,
 }
 
@@ -32,7 +33,9 @@ pub fn get_user_event() -> UserEvent {
         }
         crossterm::event::Event::Mouse(_mouse_event) => {}
         crossterm::event::Event::Paste(_) => {}
-        crossterm::event::Event::Resize(_, _) => {}
+        crossterm::event::Event::Resize(columns, rows) => {
+            return UserEvent::Resize(columns, rows);
+        }
     }
 
     return UserEvent::None;

@@ -12,7 +12,6 @@ use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
 use crate::user_event::{get_user_event, UserEvent};
 use crate::utils::fs::get_file_content_by_path;
-use crate::utils::terminal::{get_terminal_total_cols, get_terminal_total_rows};
 use crate::utils::time::get_today_date;
 
 pub struct LogPager {
@@ -23,10 +22,15 @@ pub struct LogPager {
     page_log_line_range_begin: usize,
     bottom_message: StyledContent<String>,
     log_item_list: LogItemList,
+    terminal_total_rows: u16,
+    terminal_total_cols: u16,
 }
 
 impl LogPager {
     pub fn new(date: NaiveDate, log_dir_path: PathBuf) -> Self {
+        use crate::utils::terminal::{get_terminal_total_cols, get_terminal_total_rows};
+        let terminal_total_rows = get_terminal_total_rows();
+        let terminal_total_cols = get_terminal_total_cols();
         let message = StyledContent::new(ContentStyle::new(), String::new());
         let mut ret = LogPager {
             date,
@@ -35,6 +39,8 @@ impl LogPager {
             page_log_line_range_begin: 0,
             bottom_message: message,
             log_item_list: LogItemList::new(),
+            terminal_total_rows,
+            terminal_total_cols,
         };
 
         ret.update_pager();
@@ -51,7 +57,7 @@ impl LogPager {
     }
 
     pub fn page_log_line_range_end(&self) -> usize {
-        let terminal_total_rows = get_terminal_total_rows();
+        let terminal_total_rows = self.terminal_total_rows;
         if terminal_total_rows <= 2 {
             self.page_log_line_range_begin + 1
         } else {
@@ -120,7 +126,7 @@ impl LogPager {
     }
 
     fn print_colored_file_content(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
-        let terminal_total_rows = get_terminal_total_rows();
+        let terminal_total_rows = self.terminal_total_rows;
         if terminal_total_rows == 0 {
             return Ok(());
         }
@@ -140,7 +146,7 @@ impl LogPager {
     }
 
     fn print_colored_date(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
-        let terminal_total_rows = get_terminal_total_rows();
+        let terminal_total_rows = self.terminal_total_rows;
         if terminal_total_rows <= 1 {
             return Ok(());
         }
@@ -164,7 +170,7 @@ impl LogPager {
     }
 
     fn print_colored_message(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
-        let terminal_total_rows = get_terminal_total_rows();
+        let terminal_total_rows = self.terminal_total_rows;
         crossterm::queue!(
             stdout,
             cursor::MoveTo(0, terminal_total_rows - 1),
@@ -210,7 +216,7 @@ impl LogPager {
     fn split_colored_log_content_to_lines(&self) -> Vec<String> {
         let mut ret: Vec<String> = Vec::new();
         // Get the terminal's total column width.
-        let terminal_total_cols = get_terminal_total_cols() as usize;
+        let terminal_total_cols = self.terminal_total_cols as usize;
 
         for item in self.log_item_list.iter() {
             for line in item.to_colored_string().lines() {
@@ -222,6 +228,16 @@ impl LogPager {
             }
         }
         ret
+    }
+
+    fn resize(&mut self, columns: u16, rows: u16) {
+        let original_columns = self.terminal_total_cols as usize;
+        self.page_log_line_range_begin =
+            original_columns * self.page_log_line_range_begin / columns as usize;
+
+        self.terminal_total_cols = columns;
+        self.terminal_total_rows = rows;
+        self.update_pager();
     }
 
     pub fn run(&mut self) {
@@ -242,6 +258,7 @@ impl LogPager {
                 UserEvent::PrevLine => self.prev_line(),
                 UserEvent::Quit => is_exit = true,
                 UserEvent::Search => todo!(),
+                UserEvent::Resize(columns, rows) => self.resize(columns, rows),
                 UserEvent::None => continue,
             }
 
