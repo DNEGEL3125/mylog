@@ -14,16 +14,60 @@ use crate::user_event::{get_user_event, UserEvent};
 use crate::utils::fs::get_file_content_by_path;
 use crate::utils::time::get_today_date;
 
+/// Compute the index in `lines` of the first character in `line` at `line_index`.
+/// # Example
+/// ```rust
+/// let lines: Vec<String> = vec!["qwq".to_owned(), "This game".to_owned(), "Hello World".to_owned()];
+/// let mut current_char_index = 0;
+/// assert_eq!(get_char_index_by_line_index(lines, 0), 0);
+/// assert_eq!(get_char_index_by_line_index(lines, 1), 3);
+/// assert_eq!(get_char_index_by_line_index(lines, 2), 13);
+/// ```
+fn get_char_index_by_line_index(lines: &Vec<String>, line_index: usize) -> usize {
+    let mut current_char_index: usize = 0;
+    for line in lines.iter().take(line_index) {
+        current_char_index += line.chars().filter(|c| !c.is_whitespace()).count();
+    }
+
+    return current_char_index;
+}
+
+/// Calculate the line index of the `char_index + 1`th character in `lines`.
+fn get_line_index_by_char_index(lines: &Vec<String>, char_index: usize) -> Option<usize> {
+    let mut current_char_index: usize = 0;
+    for (line_index, line) in lines.iter().enumerate() {
+        current_char_index += line.chars().filter(|c| !c.is_whitespace()).count();
+        if current_char_index > char_index {
+            return Some(line_index);
+        }
+    }
+    None
+}
+
+struct Range {
+    begin: usize,
+    end: usize,
+}
+
+impl Range {
+    fn new(begin: usize, end: usize) -> Self {
+        assert!(begin <= end, "begin > end");
+        Self { begin, end }
+    }
+}
+
 pub struct LogPager {
     date: NaiveDate,
     log_dir_path: PathBuf,
     verbose: bool,
-    /// The row index at which the current page starts.
-    page_log_line_range_begin: usize,
+    /// The index of the first character of the current page in the log file.
+    /// White space characters are ignored when calculating the index.
+    begin_char_index: usize,
     bottom_message: StyledContent<String>,
     log_item_list: LogItemList,
     terminal_total_rows: u16,
     terminal_total_cols: u16,
+    colored_lines: Vec<String>,
 }
 
 impl LogPager {
@@ -36,14 +80,16 @@ impl LogPager {
             date,
             log_dir_path,
             verbose: false,
-            page_log_line_range_begin: 0,
+            begin_char_index: 0,
             bottom_message: message,
             log_item_list: LogItemList::new(),
             terminal_total_rows,
             terminal_total_cols,
+            colored_lines: Vec::new(),
         };
 
-        ret.update_pager();
+        ret.update_log_items();
+        ret.resize(terminal_total_cols, terminal_total_rows);
 
         ret
     }
@@ -53,19 +99,26 @@ impl LogPager {
     }
 
     pub fn total_content_lines(&self) -> usize {
-        self.split_colored_log_content_to_lines().len()
+        self.colored_lines.len()
     }
 
-    pub fn page_log_line_range_end(&self) -> usize {
+    fn set_begin_line_index(&mut self, line_index: usize) {
+        self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
+    }
+
+    fn page_range(&self) -> Range {
         let terminal_total_rows = self.terminal_total_rows;
-        if terminal_total_rows <= 2 {
-            self.page_log_line_range_begin + 1
+        let page_range_begin =
+            get_line_index_by_char_index(&self.colored_lines, self.begin_char_index).unwrap_or(0);
+        let page_range_end = if terminal_total_rows <= 2 {
+            page_range_begin + 1
         } else {
             min(
                 self.total_content_lines(),
-                self.page_log_line_range_begin + terminal_total_rows as usize - 2,
+                page_range_begin + terminal_total_rows as usize - 2,
             )
-        }
+        };
+        Range::new(page_range_begin, page_range_end)
     }
 
     pub fn next_day(&mut self) {
@@ -79,8 +132,8 @@ impl LogPager {
             .checked_add_days(Days::new(1))
             .expect("Date out of range");
 
-        self.update_pager();
-        self.page_log_line_range_begin = 0;
+        self.update_log_items();
+        self.begin_char_index = 0;
     }
 
     pub fn prev_day(&mut self) {
@@ -89,25 +142,28 @@ impl LogPager {
             .checked_sub_days(Days::new(1))
             .expect("Date out of range");
 
-        self.update_pager();
-        self.page_log_line_range_begin = 0;
+        self.update_log_items();
+        self.begin_char_index = 0;
     }
 
     pub fn next_line(&mut self) {
-        if self.page_log_line_range_end() >= self.total_content_lines() {
+        let page_range = self.page_range();
+        if page_range.end >= self.total_content_lines() {
             return;
         }
-        self.page_log_line_range_begin += 1;
+
+        self.set_begin_line_index(page_range.begin + 1);
     }
 
     pub fn prev_line(&mut self) {
-        if self.page_log_line_range_begin == 0 {
+        let page_range_begin = self.page_range().begin;
+        if page_range_begin == 0 {
             return;
         }
-        self.page_log_line_range_begin -= 1;
+        self.set_begin_line_index(page_range_begin - 1);
     }
 
-    fn update_pager(&mut self) {
+    fn update_log_items(&mut self) {
         let file_path = construct_log_file_path(&self.log_dir_path, self.date);
 
         let file_content = if file_path.exists() {
@@ -120,6 +176,7 @@ impl LogPager {
         };
 
         self.log_item_list = LogItemList::from_str(&file_content).expect("Invalid log file");
+        self.colored_lines = self.split_colored_log_content_to_lines();
         // let _ = self
         //     .pager
         //     .set_prompt(format!("{} {}", self.date, self.date.weekday()));
@@ -130,13 +187,13 @@ impl LogPager {
         if terminal_total_rows == 0 {
             return Ok(());
         }
-        let begin_index: usize = self.page_log_line_range_begin;
-        let end_index: usize = self.page_log_line_range_end();
 
-        let colored_lines = self.split_colored_log_content_to_lines();
+        let range = self.page_range();
 
-        for i in begin_index..end_index {
-            if i != begin_index {
+        let colored_lines = &self.colored_lines;
+
+        for i in range.begin..range.end {
+            if i != range.begin {
                 queue!(stdout, cursor::MoveToNextLine(1))?;
             }
             queue!(stdout, Print(&colored_lines[i]))?;
@@ -231,13 +288,9 @@ impl LogPager {
     }
 
     fn resize(&mut self, columns: u16, rows: u16) {
-        let original_columns = self.terminal_total_cols as usize;
-        self.page_log_line_range_begin =
-            original_columns * self.page_log_line_range_begin / columns as usize;
-
         self.terminal_total_cols = columns;
         self.terminal_total_rows = rows;
-        self.update_pager();
+        self.colored_lines = self.split_colored_log_content_to_lines();
     }
 
     pub fn run(&mut self) {
@@ -269,4 +322,164 @@ impl LogPager {
 
         disable_raw_mode().expect("Unable to diable raw mode");
     }
+}
+
+#[cfg(test)]
+mod test {
+    use std::sync::LazyLock;
+
+    use crate::log_pager::get_char_index_by_line_index;
+
+    use super::get_line_index_by_char_index;
+
+    static TEST_LINES: LazyLock<Vec<String>> = LazyLock::new(|| {
+        [
+            "The darkest valley",
+            "The highest mountain",
+            "We walk in the name of our brave",
+            "The rushing river",
+            "The blooming flower",
+            "Descended from heaven we embrace",
+        ]
+        .map(|x| x.to_string())
+        .into()
+    });
+
+    #[test]
+    fn test_get_line_index_by_char_index() {
+        let lines: &Vec<String> = &TEST_LINES;
+        let mut current_char_index = 0;
+        for (expected_line_index, line) in lines.iter().enumerate() {
+            for _ in line.chars().filter(|x| !x.is_whitespace()) {
+                assert_eq!(
+                    get_line_index_by_char_index(&lines, current_char_index),
+                    Some(expected_line_index)
+                );
+                current_char_index += 1;
+            }
+        }
+    }
+
+    #[test]
+    fn test_get_char_index_by_line_index() {
+        let lines: &Vec<String> = &TEST_LINES;
+        for (line_index, _) in lines.iter().enumerate() {
+            assert_eq!(
+                get_line_index_by_char_index(
+                    &lines,
+                    get_char_index_by_line_index(&lines, line_index)
+                ),
+                Some(line_index)
+            );
+        }
+    }
+
+    // mod resize {
+    //     struct TestConfig {
+    //         log_dir: PathBuf,
+    //         log_file_path: PathBuf,
+    //         date: NaiveDate,
+    //     }
+    //     impl TestConfig {
+    //         fn new() -> TestConfig {
+    //             let log_dir = std::env::temp_dir().join("mylog");
+    //             let date = NaiveDate::default();
+    //             let log_file_path = log_dir.join(date.to_string());
+
+    //             Self {
+    //                 log_dir,
+    //                 log_file_path,
+    //                 date,
+    //             }
+    //         }
+
+    //         fn _init(&self) -> Result<(), Box<dyn std::error::Error>> {
+    //             std::fs::create_dir(&self.log_dir)?;
+    //             std::fs::File::create(&self.log_file_path)?;
+    //             Ok(())
+    //         }
+    //     }
+
+    //     impl Drop for TestConfig {
+    //         fn drop(&mut self) {
+    //             if self.log_file_path.exists() {
+    //                 std::fs::remove_file(&self.log_file_path).expect(&format!(
+    //                     "Unable to remove file '{}'",
+    //                     self.log_file_path.display()
+    //                 ));
+    //             }
+
+    //             if self.log_dir.exists() {
+    //                 std::fs::remove_dir(&self.log_dir).expect(&format!(
+    //                     "Unable to remove directory '{}'",
+    //                     self.log_dir.display()
+    //                 ));
+    //             }
+    //         }
+    //     }
+
+    //     use crate::{
+    //         log_item::{LogItem, LogItemList},
+    //         log_pager::{get_char_index_by_line_index, get_line_by_char_index},
+    //     };
+
+    //     use super::super::LogPager;
+    //     use chrono::{NaiveDate, NaiveDateTime};
+    //     use rand::{seq::IndexedRandom, Rng};
+    //     use std::path::PathBuf;
+    //     #[test]
+    //     fn test_resize() {
+    //         let test_config = TestConfig::new();
+    //         // if let Err(err) = test_config.init() {
+    //         //     panic!("{}", err.to_string());
+    //         // }
+
+    //         let char_set: Vec<char> = [
+    //             "我在哪（）合抱之木生于毫末 ()\"'\n闻道有先后如数家珍杠杆原理"
+    //                 .chars()
+    //                 .collect::<Vec<char>>(),
+    //             ('A'..'Z').collect(),
+    //             ('a'..'z').collect(),
+    //             ('0'..'9').collect(),
+    //         ]
+    //         .concat();
+    //         let mut log_item_list = LogItemList::new();
+    //         let max_content_len: usize = 400;
+    //         for _ in 1..200 {
+    //             let content_len: usize = rand::rng().random_range(0..max_content_len) + 1;
+    //             let mut content = String::new();
+    //             for _ in 0..content_len {
+    //                 let rand_char = char_set.choose(&mut rand::rng()).unwrap();
+    //                 content.push(*rand_char);
+    //             }
+    //             log_item_list.push(LogItem::new(NaiveDateTime::default(), &content));
+    //         }
+    //         let mut log_pager = LogPager::new(test_config.date, test_config.log_dir.to_owned());
+    //         log_pager.resize(8, 8);
+    //         log_pager.log_item_list = log_item_list;
+    //         let lines = log_pager.split_colored_log_content_to_lines();
+    //         for (line_index, line) in lines.iter().enumerate() {
+    //             let first_char = line.chars().next().unwrap();
+    //             let char_index = get_char_index_by_line_index(&lines, line_index);
+    //             for (columns, rows) in [(13, 14), (8, 8)] {
+    //                 log_pager.resize(columns, rows);
+    //                 let lines_after_resizing = log_pager.split_colored_log_content_to_lines();
+    //                 let line_after_resizing =
+    //                     get_line_by_char_index(&lines_after_resizing, char_index).unwrap();
+    //                 assert!(
+    //                     line_after_resizing.contains(first_char),
+    //                     r#""{}" -> "{}", this resized line doesn't contain the first char '{}';
+    //                     char_index = {}, line_index = {}, terminal_size = {:?}, line_char_count = {}"#,
+    //                     line,
+    //                     line_after_resizing,
+    //                     first_char,
+    //                     char_index,
+    //                     line_index,
+    //                     (columns, rows),
+    //                     line.chars().count()
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
 }
