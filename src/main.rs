@@ -183,7 +183,7 @@ fn input_log_message() -> String {
     // Optionally add an initial message
     writeln!(
         temp_file,
-        "# Enter your log message here.\n# Lines starting with '#' will be ignored."
+        "\n# Enter your log message here.\n# Lines starting with '#' will be ignored."
     )
     .expect("Failed to write initial content to the temporary file");
     drop(temp_file); // Close the file so it can be opened by the editor
