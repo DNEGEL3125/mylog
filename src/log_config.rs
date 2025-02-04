@@ -48,7 +48,7 @@ impl LogConfig {
     }
 }
 
-pub fn construct_log_file_path(log_dir_path: &PathBuf, date: NaiveDate) -> PathBuf {
+pub fn construct_log_file_path(log_dir_path: &Path, date: NaiveDate) -> PathBuf {
     let date_string = date.format("%Y-%m-%d").to_string();
     let filename = format!("{}.log", date_string);
     log_dir_path.join(filename)
