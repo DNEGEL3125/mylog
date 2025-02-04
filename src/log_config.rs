@@ -44,7 +44,7 @@ impl LogConfig {
 
     fn write_to_file(&self, mut file: &File) {
         let content = toml::to_string(self).expect("Unknown error");
-        file.write(content.as_bytes())
+        file.write_all(content.as_bytes())
             .expect("Can't write to the config file");
     }
 }
