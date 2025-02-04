@@ -38,8 +38,7 @@ impl LogConfig {
         let mut content = String::new();
         file.read_to_string(&mut content)
             .expect("Can't read the config file");
-        let config: LogConfig = toml::from_str(&content).expect("Invalid toml file");
-        return config;
+        toml::from_str(&content).expect("Invalid toml file")
     }
 
     fn write_to_file(&self, mut file: &File) {
