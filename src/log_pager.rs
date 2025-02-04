@@ -29,7 +29,7 @@ fn get_char_index_by_line_index(lines: &Vec<String>, line_index: usize) -> usize
         current_char_index += line.chars().filter(|c| !c.is_whitespace()).count();
     }
 
-    return current_char_index;
+    current_char_index
 }
 
 /// Calculate the line index of the `char_index + 1`th character in `lines`.
