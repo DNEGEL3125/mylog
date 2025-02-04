@@ -124,7 +124,7 @@ impl LogPager {
     pub fn next_day(&mut self) {
         if self.date == get_today_date() {
             let err_msg = "This is already today's log";
-            self.show_error_message(&err_msg);
+            self.show_error_message(err_msg);
             return;
         }
         self.date = self
