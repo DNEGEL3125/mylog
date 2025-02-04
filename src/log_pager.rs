@@ -23,7 +23,7 @@ use crate::utils::time::get_today_date;
 /// assert_eq!(get_char_index_by_line_index(lines, 1), 3);
 /// assert_eq!(get_char_index_by_line_index(lines, 2), 13);
 /// ```
-fn get_char_index_by_line_index(lines: &Vec<String>, line_index: usize) -> usize {
+fn get_char_index_by_line_index(lines: &[String], line_index: usize) -> usize {
     let mut current_char_index: usize = 0;
     for line in lines.iter().take(line_index) {
         current_char_index += line.chars().filter(|c| !c.is_whitespace()).count();
@@ -33,7 +33,7 @@ fn get_char_index_by_line_index(lines: &Vec<String>, line_index: usize) -> usize
 }
 
 /// Calculate the line index of the `char_index + 1`th character in `lines`.
-fn get_line_index_by_char_index(lines: &Vec<String>, char_index: usize) -> Option<usize> {
+fn get_line_index_by_char_index(lines: &[String], char_index: usize) -> Option<usize> {
     let mut current_char_index: usize = 0;
     for (line_index, line) in lines.iter().enumerate() {
         current_char_index += line.chars().filter(|c| !c.is_whitespace()).count();
