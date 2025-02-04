@@ -38,5 +38,5 @@ pub fn get_user_event() -> UserEvent {
         }
     }
 
-    return UserEvent::None;
+    UserEvent::None
 }
