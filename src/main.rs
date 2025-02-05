@@ -39,7 +39,7 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
         }
         3 => {
             let date_fmt = "%Y-%m-%d";
-            NaiveDate::parse_from_str(&date_str, &date_fmt).map_err(|_| &err_msg_template)?
+            NaiveDate::parse_from_str(date_str, date_fmt).map_err(|_| &err_msg_template)?
         }
         _ => return Err(err_msg_template),
     };
