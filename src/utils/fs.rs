@@ -1,6 +1,5 @@
 use std::{
     fs::{File, OpenOptions},
-    io::Read,
     path::PathBuf,
 };
 
@@ -28,17 +27,6 @@ pub fn create_unique_temp_file() -> (File, PathBuf) {
     }
 
     unreachable!("Ran out of unique temporary file names");
-}
-
-pub fn get_file_content_by_path(file_path: &PathBuf) -> String {
-    // Open the file
-    let mut file = File::open(file_path).expect("Can't open the file");
-    // Read the content of the file into a string
-    let mut content = String::new();
-    file.read_to_string(&mut content)
-        .expect("Can't read the file");
-
-    return content;
 }
 
 pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<usize> {
@@ -81,28 +69,5 @@ mod test {
         for file_path in file_path_set {
             std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
         }
-    }
-
-    #[test]
-    fn test_get_file_content_by_path() {
-        use super::{create_unique_temp_file, get_file_content_by_path};
-        use std::io::Write;
-        let (mut output_file, file_path) = create_unique_temp_file();
-
-        let file_content = r#"The darkest valley
-            The highest mountain
-            We walk in the name of our brave
-            The rushing river, the blooming flower
-            Descended from heaven we embrace"#;
-
-        output_file
-            .write_all(file_content.as_bytes())
-            .expect(&format!("Unable to write the file {:?}", file_path));
-        std::mem::drop(output_file);
-
-        assert_eq!(get_file_content_by_path(&file_path), file_content);
-
-        // Clean up the created temporary file.
-        std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
     }
 }

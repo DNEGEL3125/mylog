@@ -11,7 +11,6 @@ use crossterm::{cursor, execute, queue};
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
 use crate::user_event::{get_user_event, UserEvent};
-use crate::utils::fs::get_file_content_by_path;
 use crate::utils::time::get_today_date;
 
 /// Compute the index in `lines` of the first character in `line` at `line_index`.
@@ -166,14 +165,12 @@ impl LogPager {
     fn update_log_items(&mut self) {
         let file_path = construct_log_file_path(&self.log_dir_path, &self.date);
 
-        let file_content = if file_path.exists() {
-            get_file_content_by_path(&file_path)
-        } else {
+        let file_content = std::fs::read_to_string(&file_path).unwrap_or_else(|_err| {
             if self.verbose {
                 self.show_error_message(&format!("'{}' doesn't exist", file_path.display()));
             }
             String::new()
-        };
+        });
 
         self.log_item_list = LogItemList::from_str(&file_content).expect("Invalid log file");
         self.colored_lines = self.split_colored_log_content_to_lines();
