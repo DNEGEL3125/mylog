@@ -164,7 +164,7 @@ impl LogPager {
     }
 
     fn update_log_items(&mut self) {
-        let file_path = construct_log_file_path(&self.log_dir_path, self.date);
+        let file_path = construct_log_file_path(&self.log_dir_path, &self.date);
 
         let file_content = if file_path.exists() {
             get_file_content_by_path(&file_path)
@@ -293,6 +293,18 @@ impl LogPager {
         self.colored_lines = self.split_colored_log_content_to_lines();
     }
 
+    fn edit(&mut self) -> Result<(), std::io::Error> {
+        let log_dir_path = &self.log_dir_path;
+        let date = &self.date;
+        let file_path = construct_log_file_path(log_dir_path, date);
+        crate::utils::terminal::restore_terminal().expect("Unable to restore the terminal");
+        edit::edit_file(file_path)?;
+        self.update_log_items();
+        execute!(stdout(), crossterm::terminal::EnterAlternateScreen)
+            .expect("Unable to enter alternate screen");
+        Ok(())
+    }
+
     pub fn run(&mut self) {
         enable_raw_mode().expect("Failed to enable raw mode");
         execute!(stdout(), crossterm::terminal::EnterAlternateScreen)
@@ -310,6 +322,7 @@ impl LogPager {
                 UserEvent::NextLine => self.next_line(),
                 UserEvent::PrevLine => self.prev_line(),
                 UserEvent::Quit => is_exit = true,
+                UserEvent::Edit => self.edit().expect("Unable to edit the file"),
                 UserEvent::Search => todo!(),
                 UserEvent::Resize(columns, rows) => self.resize(columns, rows),
                 UserEvent::None => continue,

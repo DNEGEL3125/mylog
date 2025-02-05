@@ -71,7 +71,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
     let date_time_now = date_time_now();
     let today_date = date_time_now.date();
 
-    let log_file_path = construct_log_file_path(log_dir_path, today_date);
+    let log_file_path = construct_log_file_path(log_dir_path, &today_date);
 
     // If the log file does not exist, create it
     let _ = std::fs::File::create_new(&log_file_path);
@@ -100,7 +100,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) {
         }
     };
 
-    let log_file_path = construct_log_file_path(log_dir_path, date);
+    let log_file_path = construct_log_file_path(log_dir_path, &date);
 
     // If the log file does not exist, create it
     let _ = std::fs::File::create_new(&log_file_path);
