@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::{path::PathBuf, process::exit};
 
 use chrono::Datelike;
@@ -66,7 +67,7 @@ fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
     paging_log_file_by_date(log_dir_path, date, verbose);
 }
 
-fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
+fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
     let date_time_now = date_time_now();
     let today_date = date_time_now.date();
 
@@ -83,7 +84,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &PathBuf) {
     LogItem::append_to_file(&log_item, &log_file_path, verbose);
 }
 
-fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
+fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) {
     let today_date = get_today_date();
     let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
