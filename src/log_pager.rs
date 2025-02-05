@@ -365,7 +365,7 @@ mod test {
         for (expected_line_index, line) in lines.iter().enumerate() {
             for _ in line.chars().filter(|x| !x.is_whitespace()) {
                 assert_eq!(
-                    get_line_index_by_char_index(&lines, current_char_index),
+                    get_line_index_by_char_index(lines, current_char_index),
                     Some(expected_line_index)
                 );
                 current_char_index += 1;
@@ -379,8 +379,8 @@ mod test {
         for (line_index, _) in lines.iter().enumerate() {
             assert_eq!(
                 get_line_index_by_char_index(
-                    &lines,
-                    get_char_index_by_line_index(&lines, line_index)
+                    lines,
+                    get_char_index_by_line_index(lines, line_index)
                 ),
                 Some(line_index)
             );
