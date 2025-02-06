@@ -43,6 +43,8 @@ pub fn append_str_to_file(file_path: &PathBuf, s: &str) -> std::io::Result<usize
 
 #[cfg(test)]
 mod test {
+    use std::{fs::read_to_string, path::PathBuf};
+
     #[test]
     fn test_create_unique_temp_file() {
         use super::create_unique_temp_file;
@@ -69,5 +71,41 @@ mod test {
         for file_path in file_path_set {
             std::fs::remove_file(file_path).expect("Unable to delete the created temporary files");
         }
+    }
+
+    struct TestAppendStrToFileConfig {
+        file_path: PathBuf,
+    }
+
+    impl Drop for TestAppendStrToFileConfig {
+        fn drop(&mut self) {
+            std::fs::remove_file(&self.file_path).unwrap_or_else(|err| eprintln!("{}", err));
+        }
+    }
+
+    #[test]
+    fn test_append_str_to_file() {
+        use super::append_str_to_file;
+
+        let append_lines_count = 100;
+        let init_file_content = r#"道 可 道 ， 非 常 道 。 名 可 名 ， 非 常 名 。
+无 名 天 地 之 始 ﹔ 有 名 万 物 之 母 。
+故 常 无 ， 欲 以 观 其 妙 ﹔ 常 有 ， 欲 以 观 其 徼 。
+此 两 者 ， 同 出 而 异 名 ， 同 谓 之 玄 。
+玄 之 又 玄 ， 众 妙 之 门 。"#;
+
+        let string_to_append = "I am the string to append";
+        let (_, file_path) = super::create_unique_temp_file();
+        let test_config = TestAppendStrToFileConfig { file_path };
+        let file_path = &test_config.file_path;
+        let mut expected_file_content: String = init_file_content.to_owned();
+        append_str_to_file(file_path, init_file_content).expect("Fail to write the file");
+        for _ in 0..append_lines_count {
+            append_str_to_file(file_path, string_to_append).expect("Fail to write the file");
+            expected_file_content.push_str(string_to_append);
+        }
+
+        let final_file_content = read_to_string(file_path).expect("Fail to read the file");
+        assert_eq!(final_file_content, expected_file_content);
     }
 }
