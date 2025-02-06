@@ -29,7 +29,7 @@ pub fn create_unique_temp_file() -> (File, PathBuf) {
     unreachable!("Ran out of unique temporary file names");
 }
 
-pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<usize> {
+pub fn append_str_to_file(file_path: &PathBuf, s: &str) -> std::io::Result<usize> {
     use std::fs::OpenOptions;
     use std::io;
 
@@ -38,7 +38,7 @@ pub fn append_line_to_file(file_path: &PathBuf, line: &str) -> std::io::Result<u
         .append(true) // Enable appending
         .open(file_path)?; // Open the file
 
-    io::Write::write(&mut file, line.as_bytes()) // Write the line with a newline at the end
+    io::Write::write(&mut file, s.as_bytes()) // Write the line with a newline at the end
 }
 
 #[cfg(test)]

@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::exit, str::FromStr};
 use chrono::NaiveDateTime;
 use crossterm::style::Stylize;
 
-use crate::utils::fs::append_line_to_file;
+use crate::utils::fs::append_str_to_file;
 
 pub enum ParseError {
     DateNotFound,
@@ -65,7 +65,7 @@ impl LogItem {
     }
 
     pub fn append_to_file(&self, log_file_path: &PathBuf, verbose: bool) {
-        let result = append_line_to_file(log_file_path, &self.to_string());
+        let result = append_str_to_file(log_file_path, &self.to_string());
         if result.is_err() {
             println!("Can't write message to the log file");
             exit(3);
