@@ -34,7 +34,6 @@ pub fn append_str_to_file(file_path: &PathBuf, s: &str) -> std::io::Result<usize
     use std::io;
 
     let mut file = OpenOptions::new()
-        .write(true) // Enable writing
         .append(true) // Enable appending
         .open(file_path)?; // Open the file
 
