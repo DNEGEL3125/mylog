@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::LazyLock};
 
-pub static PKG_NAME: &str = std::env!("CARGO_PKG_NAME");
+pub const PKG_NAME: &str = std::env!("CARGO_PKG_NAME");
 
 pub const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
