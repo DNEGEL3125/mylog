@@ -162,6 +162,16 @@ impl LogPager {
         self.set_begin_line_index(page_range_begin - 1);
     }
 
+    fn goto_page_begin(&mut self) {
+        self.set_begin_line_index(0);
+    }
+
+    fn goto_page_end(&mut self) {
+        let original_page_range = self.page_range();
+        let diff = self.total_content_lines() - original_page_range.end;
+        self.set_begin_line_index(original_page_range.begin + diff);
+    }
+
     fn update_log_items(&mut self) {
         let file_path = construct_log_file_path(&self.log_dir_path, &self.date);
 
@@ -318,6 +328,8 @@ impl LogPager {
                 UserEvent::PrevDay => self.prev_day(),
                 UserEvent::NextLine => self.next_line(),
                 UserEvent::PrevLine => self.prev_line(),
+                UserEvent::GotoPageBegin => self.goto_page_begin(),
+                UserEvent::GotoPageEnd => self.goto_page_end(),
                 UserEvent::Quit => is_exit = true,
                 UserEvent::Edit => self.edit().expect("Unable to edit the file"),
                 UserEvent::Search => todo!(),

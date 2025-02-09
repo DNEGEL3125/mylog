@@ -3,6 +3,8 @@ pub enum UserEvent {
     PrevDay,
     NextLine,
     PrevLine,
+    GotoPageBegin,
+    GotoPageEnd,
     Quit,
     Edit,
     Search,
@@ -16,6 +18,8 @@ pub fn get_user_event() -> UserEvent {
         crossterm::event::Event::Key(key_event) => match key_event.code {
             KeyCode::Char('j') => UserEvent::NextLine,
             KeyCode::Char('k') => UserEvent::PrevLine,
+            KeyCode::Char('g') => UserEvent::GotoPageBegin,
+            KeyCode::Char('G') => UserEvent::GotoPageEnd,
             KeyCode::Char('l') => UserEvent::NextDay,
             KeyCode::Char('h') => UserEvent::PrevDay,
             KeyCode::Char('q') => UserEvent::Quit,
