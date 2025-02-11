@@ -14,6 +14,7 @@ use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
 use crate::utils::time::get_today_date;
 
+pub mod command;
 pub mod command_event;
 pub mod view_event;
 
@@ -376,10 +377,28 @@ impl LogPager {
         self.mode = LogPagerMode::ViewMode;
     }
 
+    fn execute_command(&mut self) {
+        let command_str = &self.command_buffer;
+        let command = self::command::Command::from_str(command_str);
+        match command {
+            command::Command::None => {}
+            command::Command::ShowDate => todo!(),
+            command::Command::SetDate(date_str) => {
+                if let Ok(date) = NaiveDate::from_str(&date_str) {
+                    self.date = date;
+                    self.update_log_items();
+                }
+            }
+        }
+
+        self.command_buffer.clear();
+        self.enter_view_mode();
+    }
+
     fn handle_command_event(&mut self, event: CommandEvent) {
         self.clear_error_message();
         match event {
-            CommandEvent::Execute => todo!(),
+            CommandEvent::Execute => self.execute_command(),
             CommandEvent::Char(c) => self.command_buffer.push(c),
             CommandEvent::None => {}
             CommandEvent::Cancel => self.enter_view_mode(),
