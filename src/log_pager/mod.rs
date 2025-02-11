@@ -4,14 +4,18 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use chrono::{Datelike, Days, NaiveDate};
+use command_event::{get_command_event, CommandEvent};
 use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
 use crossterm::{cursor, execute, queue};
+use view_event::{get_view_event, ViewEvent};
 
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
-use crate::user_event::{get_user_event, UserEvent};
 use crate::utils::time::get_today_date;
+
+pub mod command_event;
+pub mod view_event;
 
 /// Compute the index in `lines` of the first character in `line` at `line_index`.
 /// # Example
@@ -55,6 +59,12 @@ impl Range {
     }
 }
 
+#[derive(PartialEq)]
+enum LogPagerMode {
+    ViewMode,
+    CommandMode,
+}
+
 pub struct LogPager {
     date: NaiveDate,
     log_dir_path: PathBuf,
@@ -67,6 +77,9 @@ pub struct LogPager {
     terminal_total_rows: u16,
     terminal_total_cols: u16,
     colored_lines: Vec<String>,
+    mode: LogPagerMode,
+    is_exit: bool,
+    command_buffer: String,
 }
 
 impl LogPager {
@@ -85,6 +98,9 @@ impl LogPager {
             terminal_total_rows,
             terminal_total_cols,
             colored_lines: Vec::new(),
+            mode: LogPagerMode::ViewMode,
+            is_exit: false,
+            command_buffer: String::new(),
         };
 
         ret.update_log_items();
@@ -244,6 +260,18 @@ impl LogPager {
         Ok(())
     }
 
+    fn print_command(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+        let terminal_total_rows = self.terminal_total_rows;
+        crossterm::queue!(
+            stdout,
+            cursor::MoveTo(0, terminal_total_rows - 1),
+            Print(':'),
+            Print(&self.command_buffer)
+        )?;
+
+        Ok(())
+    }
+
     pub fn print_pager(&self) -> Result<(), std::io::Error> {
         let mut stdout = stdout();
         crossterm::queue!(
@@ -255,6 +283,9 @@ impl LogPager {
         self.print_colored_file_content(&mut stdout)?;
         self.print_colored_date(&mut stdout)?;
         self.print_colored_message(&mut stdout)?;
+        if self.mode == LogPagerMode::CommandMode {
+            self.print_command(&mut stdout)?;
+        }
 
         stdout.flush()?;
         Ok(())
@@ -312,32 +343,67 @@ impl LogPager {
         Ok(())
     }
 
+    fn enter_command_mode(&mut self) {
+        self.mode = LogPagerMode::CommandMode;
+    }
+
+    fn exit(&mut self) {
+        self.is_exit = true;
+    }
+
+    fn handle_view_event(&mut self, event: ViewEvent) {
+        self.clear_error_message();
+        match event {
+            ViewEvent::NextDay => self.next_day(),
+            ViewEvent::PrevDay => self.prev_day(),
+            ViewEvent::NextLine => self.next_line(),
+            ViewEvent::PrevLine => self.prev_line(),
+            ViewEvent::GotoPageBegin => self.goto_page_begin(),
+            ViewEvent::GotoPageEnd => self.goto_page_end(),
+            ViewEvent::Quit => self.exit(),
+            ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
+            ViewEvent::Search => todo!(),
+            ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
+            ViewEvent::EnterCommandMode => self.enter_command_mode(),
+            ViewEvent::None => {}
+        }
+
+        self.print_pager().expect("Unable to print the pager");
+    }
+
+    fn enter_view_mode(&mut self) {
+        self.command_buffer.clear();
+        self.mode = LogPagerMode::ViewMode;
+    }
+
+    fn handle_command_event(&mut self, event: CommandEvent) {
+        self.clear_error_message();
+        match event {
+            CommandEvent::Execute => todo!(),
+            CommandEvent::Char(c) => self.command_buffer.push(c),
+            CommandEvent::None => {}
+            CommandEvent::Cancel => self.enter_view_mode(),
+        }
+        self.print_pager().expect("Unable to print the pager");
+    }
+
     pub fn run(&mut self) {
         enable_raw_mode().expect("Failed to enable raw mode");
         execute!(stdout(), crossterm::terminal::EnterAlternateScreen)
             .expect("Unable to enter alternate screen");
         self.print_pager().expect("Print pager");
 
-        let mut is_exit = false;
-        while !is_exit {
-            let user_event = get_user_event();
-
-            self.clear_error_message();
-            match user_event {
-                UserEvent::NextDay => self.next_day(),
-                UserEvent::PrevDay => self.prev_day(),
-                UserEvent::NextLine => self.next_line(),
-                UserEvent::PrevLine => self.prev_line(),
-                UserEvent::GotoPageBegin => self.goto_page_begin(),
-                UserEvent::GotoPageEnd => self.goto_page_end(),
-                UserEvent::Quit => is_exit = true,
-                UserEvent::Edit => self.edit().expect("Unable to edit the file"),
-                UserEvent::Search => todo!(),
-                UserEvent::Resize(columns, rows) => self.resize(columns, rows),
-                UserEvent::None => continue,
+        while !self.is_exit {
+            match self.mode {
+                LogPagerMode::ViewMode => {
+                    let event = get_view_event();
+                    self.handle_view_event(event);
+                }
+                LogPagerMode::CommandMode => {
+                    let event = get_command_event();
+                    self.handle_command_event(event);
+                }
             }
-
-            is_exit = is_exit || self.print_pager().is_err();
         }
 
         crate::utils::terminal::restore_terminal().expect("Unable to restore the terminal");

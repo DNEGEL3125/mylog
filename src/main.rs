@@ -14,7 +14,6 @@ pub mod constants;
 pub mod log_config;
 pub mod log_item;
 pub mod log_pager;
-pub mod user_event;
 pub mod utils;
 
 fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: bool) {
