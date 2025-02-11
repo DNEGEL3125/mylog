@@ -402,6 +402,13 @@ impl LogPager {
             CommandEvent::Char(c) => self.command_buffer.push(c),
             CommandEvent::None => {}
             CommandEvent::Cancel => self.enter_view_mode(),
+            CommandEvent::Backspace => {
+                if self.command_buffer.is_empty() {
+                    self.enter_view_mode();
+                } else {
+                    self.command_buffer.pop().unwrap();
+                }
+            }
         }
         self.print_pager().expect("Unable to print the pager");
     }
