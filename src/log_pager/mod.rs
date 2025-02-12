@@ -409,6 +409,7 @@ impl LogPager {
                     self.command_buffer.pop().unwrap();
                 }
             }
+            CommandEvent::ClearLine => self.command_buffer.clear(),
         }
         self.print_pager().expect("Unable to print the pager");
     }
