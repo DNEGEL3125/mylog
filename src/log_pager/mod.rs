@@ -4,19 +4,18 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use chrono::{Datelike, Days, NaiveDate};
-use command_event::CommandEvent;
 use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
 use crossterm::{cursor, execute, queue};
-use view_event::ViewEvent;
+use events::command_event::CommandEvent;
+use events::view_event::ViewEvent;
 
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
 use crate::utils::time::get_today_date;
 
 pub mod command;
-pub mod command_event;
-pub mod view_event;
+pub mod events;
 
 /// Compute the index in `lines` of the first character in `line` at `line_index`.
 /// # Example
