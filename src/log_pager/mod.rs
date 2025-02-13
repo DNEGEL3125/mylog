@@ -4,11 +4,11 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use chrono::{Datelike, Days, NaiveDate};
-use command_event::{get_command_event, CommandEvent};
+use command_event::CommandEvent;
 use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
 use crossterm::{cursor, execute, queue};
-use view_event::{get_view_event, ViewEvent};
+use view_event::ViewEvent;
 
 use crate::log_config::construct_log_file_path;
 use crate::log_item::LogItemList;
@@ -421,13 +421,14 @@ impl LogPager {
         self.print_pager().expect("Print pager");
 
         while !self.is_exit {
+            let crossterm_event = crossterm::event::read().expect("Unable to read the event");
             match self.mode {
                 LogPagerMode::ViewMode => {
-                    let event = get_view_event();
+                    let event = ViewEvent::from_crossterm_event(crossterm_event);
                     self.handle_view_event(event);
                 }
                 LogPagerMode::CommandMode => {
-                    let event = get_command_event();
+                    let event = CommandEvent::from_crossterm_event(crossterm_event);
                     self.handle_command_event(event);
                 }
             }
