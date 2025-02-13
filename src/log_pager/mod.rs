@@ -62,9 +62,9 @@ impl Range {
 
 #[derive(PartialEq)]
 enum LogPagerMode {
-    ViewMode,
-    CommandMode,
-    SearchMode,
+    View,
+    Command,
+    Search,
 }
 
 pub struct LogPager {
@@ -101,7 +101,7 @@ impl LogPager {
             terminal_total_rows,
             terminal_total_cols,
             colored_lines: Vec::new(),
-            mode: LogPagerMode::ViewMode,
+            mode: LogPagerMode::View,
             is_exit: false,
             command_buffer: String::new(),
             search_string: String::new(),
@@ -300,15 +300,15 @@ impl LogPager {
         self.print_colored_date(&mut stdout)?;
         self.print_colored_message(&mut stdout)?;
         match self.mode {
-            LogPagerMode::CommandMode => {
+            LogPagerMode::Command => {
                 self.print_command(&mut stdout)?;
             }
-            LogPagerMode::SearchMode => {
+            LogPagerMode::Search => {
                 self.print_search_string(&mut stdout)?;
             }
             _ => {}
         }
-        if self.mode == LogPagerMode::CommandMode {
+        if self.mode == LogPagerMode::Command {
             self.print_command(&mut stdout)?;
         }
 
@@ -369,11 +369,11 @@ impl LogPager {
     }
 
     fn enter_command_mode(&mut self) {
-        self.mode = LogPagerMode::CommandMode;
+        self.mode = LogPagerMode::Command;
     }
 
     fn enter_search_mode(&mut self) {
-        self.mode = LogPagerMode::SearchMode;
+        self.mode = LogPagerMode::Search;
     }
 
     fn exit(&mut self) {
@@ -403,7 +403,7 @@ impl LogPager {
     fn enter_view_mode(&mut self) {
         self.command_buffer.clear();
         self.search_string.clear();
-        self.mode = LogPagerMode::ViewMode;
+        self.mode = LogPagerMode::View;
     }
 
     fn execute_command(&mut self) {
@@ -471,15 +471,15 @@ impl LogPager {
         while !self.is_exit {
             let crossterm_event = crossterm::event::read().expect("Unable to read the event");
             match self.mode {
-                LogPagerMode::ViewMode => {
+                LogPagerMode::View => {
                     let event = ViewEvent::from_crossterm_event(crossterm_event);
                     self.handle_view_event(event);
                 }
-                LogPagerMode::CommandMode => {
+                LogPagerMode::Command => {
                     let event = CommandEvent::from_crossterm_event(crossterm_event);
                     self.handle_command_event(event);
                 }
-                LogPagerMode::SearchMode => {
+                LogPagerMode::Search => {
                     let event = SearchEvent::from_crossterm_event(crossterm_event);
                     self.handle_search_event(event);
                 }
