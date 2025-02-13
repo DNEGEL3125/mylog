@@ -8,6 +8,7 @@ use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, S
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
 use crossterm::{cursor, execute, queue};
 use events::command_event::CommandEvent;
+use events::search_event::SearchEvent;
 use events::view_event::ViewEvent;
 
 use crate::log_config::construct_log_file_path;
@@ -63,6 +64,7 @@ impl Range {
 enum LogPagerMode {
     ViewMode,
     CommandMode,
+    SearchMode,
 }
 
 pub struct LogPager {
@@ -80,6 +82,7 @@ pub struct LogPager {
     mode: LogPagerMode,
     is_exit: bool,
     command_buffer: String,
+    search_string: String,
 }
 
 impl LogPager {
@@ -101,6 +104,7 @@ impl LogPager {
             mode: LogPagerMode::ViewMode,
             is_exit: false,
             command_buffer: String::new(),
+            search_string: String::new(),
         };
 
         ret.update_log_items();
@@ -272,6 +276,18 @@ impl LogPager {
         Ok(())
     }
 
+    fn print_search_string(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+        let terminal_total_rows = self.terminal_total_rows;
+        crossterm::queue!(
+            stdout,
+            cursor::MoveTo(0, terminal_total_rows - 1),
+            Print('/'),
+            Print(&self.search_string)
+        )?;
+
+        Ok(())
+    }
+
     pub fn print_pager(&self) -> Result<(), std::io::Error> {
         let mut stdout = stdout();
         crossterm::queue!(
@@ -283,6 +299,15 @@ impl LogPager {
         self.print_colored_file_content(&mut stdout)?;
         self.print_colored_date(&mut stdout)?;
         self.print_colored_message(&mut stdout)?;
+        match self.mode {
+            LogPagerMode::CommandMode => {
+                self.print_command(&mut stdout)?;
+            }
+            LogPagerMode::SearchMode => {
+                self.print_search_string(&mut stdout)?;
+            }
+            _ => {}
+        }
         if self.mode == LogPagerMode::CommandMode {
             self.print_command(&mut stdout)?;
         }
@@ -347,6 +372,10 @@ impl LogPager {
         self.mode = LogPagerMode::CommandMode;
     }
 
+    fn enter_search_mode(&mut self) {
+        self.mode = LogPagerMode::SearchMode;
+    }
+
     fn exit(&mut self) {
         self.is_exit = true;
     }
@@ -365,6 +394,7 @@ impl LogPager {
             ViewEvent::Search => todo!(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
+            ViewEvent::EnterSearchMode => self.enter_search_mode(),
             ViewEvent::None => {}
         }
 
@@ -373,6 +403,7 @@ impl LogPager {
 
     fn enter_view_mode(&mut self) {
         self.command_buffer.clear();
+        self.search_string.clear();
         self.mode = LogPagerMode::ViewMode;
     }
 
@@ -413,6 +444,25 @@ impl LogPager {
         self.print_pager().expect("Unable to print the pager");
     }
 
+    fn handle_search_event(&mut self, event: SearchEvent) {
+        self.clear_error_message();
+        match event {
+            SearchEvent::Confirm => self.execute_command(),
+            SearchEvent::Char(c) => self.search_string.push(c),
+            SearchEvent::None => {}
+            SearchEvent::Cancel => self.enter_view_mode(),
+            SearchEvent::Backspace => {
+                if self.search_string.is_empty() {
+                    self.enter_view_mode();
+                } else {
+                    self.search_string.pop().unwrap();
+                }
+            }
+            SearchEvent::ClearLine => self.search_string.clear(),
+        }
+        self.print_pager().expect("Unable to print the pager");
+    }
+
     pub fn run(&mut self) {
         enable_raw_mode().expect("Failed to enable raw mode");
         execute!(stdout(), crossterm::terminal::EnterAlternateScreen)
@@ -429,6 +479,10 @@ impl LogPager {
                 LogPagerMode::CommandMode => {
                     let event = CommandEvent::from_crossterm_event(crossterm_event);
                     self.handle_command_event(event);
+                }
+                LogPagerMode::SearchMode => {
+                    let event = SearchEvent::from_crossterm_event(crossterm_event);
+                    self.handle_search_event(event);
                 }
             }
         }

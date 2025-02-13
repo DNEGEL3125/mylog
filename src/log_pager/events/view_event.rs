@@ -12,6 +12,7 @@ pub enum ViewEvent {
     Search,
     Resize(u16, u16),
     EnterCommandMode,
+    EnterSearchMode,
     None,
 }
 
@@ -28,6 +29,7 @@ impl ViewEvent {
                 KeyCode::Char('q') => ViewEvent::Quit,
                 KeyCode::Char('e') => ViewEvent::Edit,
                 KeyCode::Char(':') => ViewEvent::EnterCommandMode,
+                KeyCode::Char('/') => ViewEvent::EnterSearchMode,
                 _ => ViewEvent::None,
             },
             crossterm::event::Event::Resize(columns, rows) => ViewEvent::Resize(columns, rows),
