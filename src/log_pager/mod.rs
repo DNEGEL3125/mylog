@@ -391,7 +391,6 @@ impl LogPager {
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
-            ViewEvent::Search => todo!(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),

@@ -9,7 +9,6 @@ pub enum ViewEvent {
     GotoPageEnd,
     Quit,
     Edit,
-    Search,
     Resize(u16, u16),
     EnterCommandMode,
     EnterSearchMode,
