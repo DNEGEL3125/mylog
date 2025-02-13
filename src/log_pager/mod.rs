@@ -203,7 +203,7 @@ impl LogPager {
         });
 
         self.log_item_list = LogItemList::from_str(&file_content).expect("Invalid log file");
-        self.colored_lines = self.split_colored_log_content_to_lines();
+        self.update_colored_lines();
         // let _ = self
         //     .pager
         //     .set_prompt(format!("{} {}", self.date, self.date.weekday()));
@@ -330,30 +330,26 @@ impl LogPager {
     ///
     /// - For each log item, it converts the log content into a colored string.
     /// - Each line is split into smaller lines if it exceeds the terminal's width.
-    ///
-    /// # Returns
-    /// A vector of strings where each string is a single terminal-sized line.
-    fn split_colored_log_content_to_lines(&self) -> Vec<String> {
-        let mut ret: Vec<String> = Vec::new();
+    fn update_colored_lines(&mut self) {
         // Get the terminal's total column width.
         let terminal_total_cols = self.terminal_total_cols as usize;
 
+        self.colored_lines.clear();
         for item in self.log_item_list.iter() {
             for line in item.to_colored_string().lines() {
-                ret.extend(
+                self.colored_lines.extend(
                     textwrap::wrap(line, terminal_total_cols)
                         .iter()
                         .map(|x| x.to_string()),
                 );
             }
         }
-        ret
     }
 
     fn resize(&mut self, columns: u16, rows: u16) {
         self.terminal_total_cols = columns;
         self.terminal_total_rows = rows;
-        self.colored_lines = self.split_colored_log_content_to_lines();
+        self.update_colored_lines();
     }
 
     fn edit(&mut self) -> Result<(), std::io::Error> {
