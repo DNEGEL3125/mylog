@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cmp::min;
 use std::io::{stdout, Stdout, Write};
 use std::path::PathBuf;
@@ -12,7 +13,7 @@ use events::search_event::SearchEvent;
 use events::view_event::ViewEvent;
 
 use crate::log_config::construct_log_file_path;
-use crate::log_item::LogItemList;
+use crate::log_item::{LogItem, LogItemList};
 use crate::utils::time::get_today_date;
 
 pub mod command;
@@ -82,7 +83,8 @@ pub struct LogPager {
     mode: LogPagerMode,
     is_exit: bool,
     command_buffer: String,
-    search_string: String,
+    search_pattern: String,
+    search_pattern_input: String,
 }
 
 impl LogPager {
@@ -104,7 +106,8 @@ impl LogPager {
             mode: LogPagerMode::View,
             is_exit: false,
             command_buffer: String::new(),
-            search_string: String::new(),
+            search_pattern: String::new(),
+            search_pattern_input: String::new(),
         };
 
         ret.update_log_items();
@@ -276,13 +279,13 @@ impl LogPager {
         Ok(())
     }
 
-    fn print_search_string(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+    fn print_search_pattern_input(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
         let terminal_total_rows = self.terminal_total_rows;
         crossterm::queue!(
             stdout,
             cursor::MoveTo(0, terminal_total_rows - 1),
             Print('/'),
-            Print(&self.search_string)
+            Print(&self.search_pattern_input)
         )?;
 
         Ok(())
@@ -304,7 +307,7 @@ impl LogPager {
                 self.print_command(&mut stdout)?;
             }
             LogPagerMode::Search => {
-                self.print_search_string(&mut stdout)?;
+                self.print_search_pattern_input(&mut stdout)?;
             }
             _ => {}
         }
@@ -325,6 +328,28 @@ impl LogPager {
         self.bottom_message = StyledContent::new(ContentStyle::new(), String::new());
     }
 
+    fn mark_search_result<'h>(&self, s: &'h str) -> Result<Cow<'h, str>, regex::Error> {
+        let search_pattern = &self.search_pattern;
+        let regex = regex::Regex::new(search_pattern)?;
+        // Use regular expressions to replace matching parts
+        let result = regex.replace_all(s, |caps: &regex::Captures| {
+            // Get the matched text
+            let matched_text = caps.get(0).map(|m| m.as_str()).unwrap_or("");
+            // Highlight the matching text
+            matched_text.black().on_white().to_string()
+        });
+        Ok(result)
+    }
+
+    fn highlight_log_item(&self, log_item: &LogItem) -> String {
+        let date_str = format!("[{}]", log_item.date_time().format("%Y-%m-%d %H:%M"));
+        let content = log_item.content();
+        let content = self
+            .mark_search_result(content)
+            .unwrap_or(Cow::Borrowed(content));
+        format!("{} {}", date_str.green(), content)
+    }
+
     /// Splits the log content into lines that fit within the terminal width,
     /// while preserving any color formatting.
     ///
@@ -336,7 +361,7 @@ impl LogPager {
 
         self.colored_lines.clear();
         for item in self.log_item_list.iter() {
-            for line in item.to_colored_string().lines() {
+            for line in self.highlight_log_item(item).lines() {
                 self.colored_lines.extend(
                     textwrap::wrap(line, terminal_total_cols)
                         .iter()
@@ -398,7 +423,6 @@ impl LogPager {
 
     fn enter_view_mode(&mut self) {
         self.command_buffer.clear();
-        self.search_string.clear();
         self.mode = LogPagerMode::View;
     }
 
@@ -439,21 +463,28 @@ impl LogPager {
         self.print_pager().expect("Unable to print the pager");
     }
 
+    fn comfirm_search(&mut self) {
+        self.search_pattern = self.search_pattern_input.clone();
+        self.search_pattern_input.clear();
+        self.update_colored_lines();
+        self.enter_view_mode();
+    }
+
     fn handle_search_event(&mut self, event: SearchEvent) {
         self.clear_error_message();
         match event {
-            SearchEvent::Confirm => self.execute_command(),
-            SearchEvent::Char(c) => self.search_string.push(c),
+            SearchEvent::Confirm => self.comfirm_search(),
+            SearchEvent::Char(c) => self.search_pattern_input.push(c),
             SearchEvent::None => {}
             SearchEvent::Cancel => self.enter_view_mode(),
             SearchEvent::Backspace => {
-                if self.search_string.is_empty() {
+                if self.search_pattern_input.is_empty() {
                     self.enter_view_mode();
                 } else {
-                    self.search_string.pop().unwrap();
+                    self.search_pattern_input.pop().unwrap();
                 }
             }
-            SearchEvent::ClearLine => self.search_string.clear(),
+            SearchEvent::ClearLine => self.search_pattern_input.clear(),
         }
         self.print_pager().expect("Unable to print the pager");
     }
