@@ -60,6 +60,10 @@ impl LogItem {
         }
     }
 
+    pub fn date_time(&self) -> &NaiveDateTime {
+        &self.date_time
+    }
+
     pub fn content(&self) -> &str {
         &self.content
     }
