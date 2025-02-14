@@ -1,7 +1,6 @@
 use std::{path::PathBuf, process::exit, str::FromStr};
 
 use chrono::NaiveDateTime;
-use crossterm::style::Stylize;
 
 use crate::utils::fs::append_str_to_file;
 
@@ -90,11 +89,6 @@ impl LogItem {
                     .expect("Invalid Unicode")
             );
         }
-    }
-
-    pub fn to_colored_string(&self) -> String {
-        let date_str = format!("[{}]", self.date_time.format("%Y-%m-%d %H:%M"));
-        format!("{} {}", date_str.green(), self.content)
     }
 }
 
