@@ -80,6 +80,16 @@ impl PagingAllPager {
         Ok(result)
     }
 
+    fn goto_page_begin(&mut self) {
+        self.set_begin_line_index(0);
+    }
+
+    fn goto_page_end(&mut self) {
+        let original_page_range = self.page_range();
+        let diff = self.total_content_lines() - original_page_range.end;
+        self.set_begin_line_index(original_page_range.begin + diff);
+    }
+
     fn highlight_log_item(&self, log_item: &LogItem) -> String {
         let date_str = format!("[{}]", log_item.date_time().format("%Y-%m-%d %H:%M"));
         let content = log_item.content();
@@ -146,6 +156,8 @@ impl PagingAllPager {
             ViewEvent::PrevLine => self.prev_line(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
+            ViewEvent::GotoPageBegin => self.goto_page_begin(),
+            ViewEvent::GotoPageEnd => self.goto_page_end(),
             _ => {}
         }
 
