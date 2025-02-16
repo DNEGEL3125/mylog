@@ -25,6 +25,10 @@ pub enum Commands {
         )]
         date: Option<String>,
 
+        /// View all logs in one page
+        #[arg(short, long, action = clap::ArgAction::SetTrue, help = "View all logs in one page.")]
+        all: bool,
+
         /// Print more output
         #[arg(short, long, action = clap::ArgAction::SetTrue, help = "Enable verbose mode.")]
         verbose: bool,

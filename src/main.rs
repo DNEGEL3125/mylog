@@ -6,6 +6,7 @@ use chrono::NaiveDate;
 use clap::Parser;
 use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
+use log_pager::paging_all_pager::PagingAllPager;
 use log_pager::LogPager;
 use utils::time::{date_time_now, get_today_date};
 
@@ -46,8 +47,13 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
     Ok(date)
 }
 
-fn view_logs(date_str: Option<String>, verbose: bool, log_dir_path: &PathBuf) {
+fn view_logs(date_str: Option<String>, all: bool, verbose: bool, log_dir_path: &PathBuf) {
     let today_date = get_today_date();
+
+    if all {
+        PagingAllPager::new(log_dir_path.to_path_buf()).run();
+        return;
+    }
 
     let date_result = match date_str {
         Some(date_str) => parse_date_from_str(&date_str),
@@ -140,8 +146,8 @@ fn main() {
     // Command line parameters
     let cli = cli::Cli::parse();
     match cli.command {
-        cli::Commands::View { date, verbose } => {
-            view_logs(date, verbose, &log_dir_path);
+        cli::Commands::View { date, verbose, all } => {
+            view_logs(date, all, verbose, &log_dir_path);
         }
         cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {

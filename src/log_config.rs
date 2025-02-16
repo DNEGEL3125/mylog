@@ -54,6 +54,16 @@ pub fn construct_log_file_path(log_dir_path: &Path, date: &NaiveDate) -> PathBuf
     log_dir_path.join(filename)
 }
 
+pub fn get_date_from_log_file_name(file_name: &str) -> Option<NaiveDate> {
+    if !file_name.ends_with(".log") {
+        None
+    } else {
+        NaiveDate::parse_from_str(&file_name.replace(".log", ""), "%Y-%m-%d")
+            .map(|x| Some(x))
+            .unwrap_or(None)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::LogConfig;
