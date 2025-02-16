@@ -140,7 +140,7 @@ impl PagingAllPager {
         all_date.sort();
         for date in all_date {
             let file_path = construct_log_file_path(&self.log_dir_path, &date);
-            let file_content: String = std::fs::read_to_string(&file_path).unwrap_or(String::new());
+            let file_content: String = std::fs::read_to_string(&file_path).unwrap_or_default();
             ret += &file_content;
         }
         ret
