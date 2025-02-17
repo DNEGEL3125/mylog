@@ -11,6 +11,7 @@ use crossterm::{cursor, execute, queue};
 use events::command_event::CommandEvent;
 use events::search_event::SearchEvent;
 use events::view_event::ViewEvent;
+use pager_mode::PagerMode;
 use range::Range;
 use utils::{get_char_index_by_line_index, get_line_index_by_char_index};
 
@@ -20,16 +21,10 @@ use crate::utils::time::get_today_date;
 
 pub mod command;
 pub mod events;
+pub mod pager_mode;
 pub mod paging_all_pager;
 pub mod range;
 pub mod utils;
-
-#[derive(PartialEq)]
-enum LogPagerMode {
-    View,
-    Command,
-    Search,
-}
 
 pub struct LogPager {
     date: NaiveDate,
@@ -43,7 +38,7 @@ pub struct LogPager {
     terminal_total_rows: u16,
     terminal_total_cols: u16,
     colored_lines: Vec<String>,
-    mode: LogPagerMode,
+    mode: PagerMode,
     is_exit: bool,
     command_buffer: String,
     search_pattern: String,
@@ -66,7 +61,7 @@ impl LogPager {
             terminal_total_rows,
             terminal_total_cols,
             colored_lines: Vec::new(),
-            mode: LogPagerMode::View,
+            mode: PagerMode::View,
             is_exit: false,
             command_buffer: String::new(),
             search_pattern: String::new(),
@@ -266,10 +261,10 @@ impl LogPager {
         self.print_colored_date(&mut stdout)?;
         self.print_colored_message(&mut stdout)?;
         match self.mode {
-            LogPagerMode::Command => {
+            PagerMode::Command => {
                 self.print_command(&mut stdout)?;
             }
-            LogPagerMode::Search => {
+            PagerMode::Search => {
                 self.print_search_pattern_input(&mut stdout)?;
             }
             _ => {}
@@ -350,11 +345,11 @@ impl LogPager {
     }
 
     fn enter_command_mode(&mut self) {
-        self.mode = LogPagerMode::Command;
+        self.mode = PagerMode::Command;
     }
 
     fn enter_search_mode(&mut self) {
-        self.mode = LogPagerMode::Search;
+        self.mode = PagerMode::Search;
     }
 
     fn exit(&mut self) {
@@ -383,7 +378,7 @@ impl LogPager {
 
     fn enter_view_mode(&mut self) {
         self.command_buffer.clear();
-        self.mode = LogPagerMode::View;
+        self.mode = PagerMode::View;
     }
 
     fn execute_command(&mut self) {
@@ -458,15 +453,15 @@ impl LogPager {
         while !self.is_exit {
             let crossterm_event = crossterm::event::read().expect("Unable to read the event");
             match self.mode {
-                LogPagerMode::View => {
+                PagerMode::View => {
                     let event = ViewEvent::from_crossterm_event(crossterm_event);
                     self.handle_view_event(event);
                 }
-                LogPagerMode::Command => {
+                PagerMode::Command => {
                     let event = CommandEvent::from_crossterm_event(crossterm_event);
                     self.handle_command_event(event);
                 }
-                LogPagerMode::Search => {
+                PagerMode::Search => {
                     let event = SearchEvent::from_crossterm_event(crossterm_event);
                     self.handle_search_event(event);
                 }
