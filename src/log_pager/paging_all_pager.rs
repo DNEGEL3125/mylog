@@ -19,13 +19,15 @@ use crate::{
 };
 
 use super::{
-    events::view_event::ViewEvent,
+    events::{search_event::SearchEvent, view_event::ViewEvent},
+    pager_mode::PagerMode,
     utils::{get_char_index_by_line_index, get_line_index_by_char_index},
     Range,
 };
 
 pub struct PagingAllPager {
     log_dir_path: PathBuf,
+    mode: PagerMode,
     /// The index of the first character of the current page in the log file.
     /// White space characters are ignored when calculating the index.
     begin_char_index: usize,
@@ -45,6 +47,7 @@ impl PagingAllPager {
         let terminal_total_cols = get_terminal_total_cols();
         let mut ret = Self {
             log_dir_path,
+            mode: PagerMode::View,
             begin_char_index: 0,
             log_item_list: LogItemList::new(),
             terminal_total_rows,
@@ -134,6 +137,13 @@ impl PagingAllPager {
         Ok(ret)
     }
 
+    fn confirm_search(&mut self) {
+        self.search_pattern = self.search_pattern_input.clone();
+        self.search_pattern_input.clear();
+        self.update_colored_lines();
+        self.enter_view_mode();
+    }
+
     fn content(&self) -> String {
         let mut ret = String::new();
         let mut all_date = self.all_date().unwrap();
@@ -146,8 +156,34 @@ impl PagingAllPager {
         ret
     }
 
+    fn enter_search_mode(&mut self) {
+        self.mode = PagerMode::Search;
+    }
+
+    fn enter_view_mode(&mut self) {
+        self.mode = PagerMode::View;
+    }
+
     fn exit(&mut self) {
         self.is_exit = true;
+    }
+
+    fn handle_search_event(&mut self, event: SearchEvent) {
+        match event {
+            SearchEvent::Confirm => self.confirm_search(),
+            SearchEvent::Char(c) => self.search_pattern_input.push(c),
+            SearchEvent::None => {}
+            SearchEvent::Cancel => self.enter_view_mode(),
+            SearchEvent::Backspace => {
+                if self.search_pattern_input.is_empty() {
+                    self.enter_view_mode();
+                } else {
+                    self.search_pattern_input.pop().unwrap();
+                }
+            }
+            SearchEvent::ClearLine => self.search_pattern_input.clear(),
+        }
+        self.print_pager().expect("Unable to print the pager");
     }
 
     fn handle_view_event(&mut self, event: ViewEvent) {
@@ -158,6 +194,7 @@ impl PagingAllPager {
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::GotoPageBegin => self.goto_page_begin(),
             ViewEvent::GotoPageEnd => self.goto_page_end(),
+            ViewEvent::EnterSearchMode => self.enter_search_mode(),
             _ => {}
         }
 
@@ -239,7 +276,26 @@ impl PagingAllPager {
         )?;
         self.print_colored_file_content(&mut stdout)?;
 
+        match self.mode {
+            PagerMode::Search => {
+                self.print_search_pattern_input(&mut stdout)?;
+            }
+            _ => {}
+        }
+
         stdout.flush()?;
+        Ok(())
+    }
+
+    fn print_search_pattern_input(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+        let terminal_total_rows = self.terminal_total_rows;
+        crossterm::queue!(
+            stdout,
+            cursor::MoveTo(0, terminal_total_rows - 1),
+            Print('/'),
+            Print(&self.search_pattern_input)
+        )?;
+
         Ok(())
     }
 
@@ -249,8 +305,17 @@ impl PagingAllPager {
 
         while !self.is_exit {
             let crossterm_event = crossterm::event::read().expect("Unable to read the event");
-            let event = ViewEvent::from_crossterm_event(crossterm_event);
-            self.handle_view_event(event);
+            match self.mode {
+                PagerMode::View => {
+                    let event = ViewEvent::from_crossterm_event(crossterm_event);
+                    self.handle_view_event(event);
+                }
+                PagerMode::Command => {}
+                PagerMode::Search => {
+                    let event = SearchEvent::from_crossterm_event(crossterm_event);
+                    self.handle_search_event(event);
+                }
+            }
         }
 
         crate::utils::terminal::restore_terminal().expect("Unable to restore the terminal");
