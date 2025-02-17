@@ -274,9 +274,6 @@ impl LogPager {
             }
             _ => {}
         }
-        if self.mode == LogPagerMode::Command {
-            self.print_command(&mut stdout)?;
-        }
 
         stdout.flush()?;
         Ok(())
