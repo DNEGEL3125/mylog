@@ -377,7 +377,7 @@ impl SingleDatePager {
 
     fn execute_command(&mut self) {
         let command_str = &self.command_buffer;
-        let command = command::Command::from_str(command_str);
+        let command = command::Command::from_str(command_str).unwrap();
         match command {
             command::Command::None => {}
             command::Command::ShowDate => todo!(),

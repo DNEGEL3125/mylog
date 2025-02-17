@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, PartialEq)]
 pub enum Command {
     ShowDate,
@@ -5,36 +7,40 @@ pub enum Command {
     None,
 }
 
-impl Command {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for Command {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split_whitespace().collect();
         if parts.is_empty() {
-            return Command::None;
+            return Ok(Command::None);
         }
-        if parts[0] == "date" {
-            return match parts.len() {
+        Ok(if parts[0] == "date" {
+            match parts.len() {
                 1 => Command::ShowDate,
                 2 => Command::SetDate(parts[1].to_owned()),
                 _ => Command::None,
-            };
-        }
-        Command::None
+            }
+        } else {
+            Command::None
+        })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use super::Command;
     #[test]
     fn test_command_from_str() {
         assert_eq!(
             Command::from_str("date 2025-2-15"),
-            Command::SetDate("2025-2-15".to_owned())
+            Ok(Command::SetDate("2025-2-15".to_owned()))
         );
         assert_eq!(
             Command::from_str("date 2021-12-5"),
-            Command::SetDate("2021-12-5".to_owned())
+            Ok(Command::SetDate("2021-12-5".to_owned()))
         );
-        assert_eq!(Command::from_str("date"), Command::ShowDate);
+        assert_eq!(Command::from_str("date"), Ok(Command::ShowDate));
     }
 }
