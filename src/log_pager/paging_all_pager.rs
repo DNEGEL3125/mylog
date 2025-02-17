@@ -21,8 +21,8 @@ use crate::{
 use super::{
     events::{search_event::SearchEvent, view_event::ViewEvent},
     pager_mode::PagerMode,
+    range::Range,
     utils::{get_char_index_by_line_index, get_line_index_by_char_index},
-    Range,
 };
 
 pub struct PagingAllPager {

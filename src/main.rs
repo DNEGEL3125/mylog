@@ -7,7 +7,7 @@ use clap::Parser;
 use log_config::{construct_log_file_path, LogConfig};
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
-use log_pager::LogPager;
+use log_pager::single_date_pager::SingleDatePager;
 use utils::time::{date_time_now, get_today_date};
 
 pub mod cli;
@@ -18,7 +18,7 @@ pub mod log_pager;
 pub mod utils;
 
 fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: bool) {
-    let mut log_pager = LogPager::new(date, log_dir_path.to_owned());
+    let mut log_pager = SingleDatePager::new(date, log_dir_path.to_owned());
     log_pager.set_verbose(verbose);
     log_pager.run();
 }
