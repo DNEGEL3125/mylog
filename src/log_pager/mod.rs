@@ -418,7 +418,7 @@ impl LogPager {
         self.print_pager().expect("Unable to print the pager");
     }
 
-    fn comfirm_search(&mut self) {
+    fn confirm_search(&mut self) {
         self.search_pattern = self.search_pattern_input.clone();
         self.search_pattern_input.clear();
         self.update_colored_lines();
@@ -428,7 +428,7 @@ impl LogPager {
     fn handle_search_event(&mut self, event: SearchEvent) {
         self.clear_error_message();
         match event {
-            SearchEvent::Confirm => self.comfirm_search(),
+            SearchEvent::Confirm => self.confirm_search(),
             SearchEvent::Char(c) => self.search_pattern_input.push(c),
             SearchEvent::None => {}
             SearchEvent::Cancel => self.enter_view_mode(),
