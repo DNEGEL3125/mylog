@@ -373,7 +373,27 @@ impl SingleDatePager {
     }
 
     fn search_prev(&mut self) {
-        todo!()
+        let target_str: String = "\0"
+            .on_white()
+            .to_string()
+            .split_once('\0')
+            .unwrap()
+            .1
+            .to_owned();
+        let lines_to_take: usize = self.begin_line_index();
+        for (line_index, line) in self
+            .colored_lines
+            .iter()
+            .enumerate()
+            .take(lines_to_take)
+            .rev()
+        {
+            if line.contains(&target_str) {
+                self.set_begin_line_index(line_index);
+                self.update_colored_lines();
+                break;
+            }
+        }
     }
 
     fn handle_view_event(&mut self, event: ViewEvent) {
