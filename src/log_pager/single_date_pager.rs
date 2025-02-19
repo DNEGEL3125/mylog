@@ -76,6 +76,10 @@ impl SingleDatePager {
         self.colored_lines.len()
     }
 
+    fn begin_line_index(&self) -> usize {
+        get_line_index_by_char_index(&self.colored_lines, self.begin_char_index).unwrap()
+    }
+
     fn set_begin_line_index(&mut self, line_index: usize) {
         self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
     }
@@ -350,6 +354,28 @@ impl SingleDatePager {
         self.is_exit = true;
     }
 
+    fn search_next(&mut self) {
+        let target_str: String = "\0"
+            .on_white()
+            .to_string()
+            .split_once('\0')
+            .unwrap()
+            .1
+            .to_owned();
+        let lines_to_skip = self.begin_line_index() + 1;
+        for (line_index, line) in self.colored_lines.iter().enumerate().skip(lines_to_skip) {
+            if line.contains(&target_str) {
+                self.set_begin_line_index(line_index);
+                self.update_colored_lines();
+                break;
+            }
+        }
+    }
+
+    fn search_prev(&mut self) {
+        todo!()
+    }
+
     fn handle_view_event(&mut self, event: ViewEvent) {
         self.clear_error_message();
         match event {
@@ -361,6 +387,8 @@ impl SingleDatePager {
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
+            ViewEvent::SearchNext => self.search_next(),
+            ViewEvent::SearchPrev => self.search_prev(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),
@@ -470,6 +498,24 @@ impl SingleDatePager {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
+    use chrono::NaiveDate;
+
+    use super::SingleDatePager;
+
+    #[test]
+    fn test_begin_line_index() {
+        let mut pager = SingleDatePager::new(NaiveDate::default(), PathBuf::default());
+        pager.colored_lines = ["qwq", "abc", "eee", "661", "sld", "934", "f8s"]
+            .iter()
+            .map(|x| x.to_string())
+            .collect();
+        pager.set_begin_line_index(5);
+        assert_eq!(pager.begin_line_index(), 5);
+        pager.set_begin_line_index(2);
+        assert_eq!(pager.begin_line_index(), 2);
+    }
     // mod resize {
     //     struct TestConfig {
     //         log_dir: PathBuf,
