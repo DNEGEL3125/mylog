@@ -366,7 +366,6 @@ impl SingleDatePager {
         for (line_index, line) in self.colored_lines.iter().enumerate().skip(lines_to_skip) {
             if line.contains(&target_str) {
                 self.set_begin_line_index(line_index);
-                self.update_colored_lines();
                 break;
             }
         }
@@ -390,7 +389,6 @@ impl SingleDatePager {
         {
             if line.contains(&target_str) {
                 self.set_begin_line_index(line_index);
-                self.update_colored_lines();
                 break;
             }
         }
