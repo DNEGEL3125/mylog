@@ -463,6 +463,7 @@ impl SingleDatePager {
         self.search_pattern_input.clear();
         self.update_colored_lines();
         self.enter_view_mode();
+        self.search_next();
     }
 
     fn handle_search_event(&mut self, event: SearchEvent) {
