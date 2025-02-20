@@ -16,6 +16,7 @@ use crossterm::{
 use crate::{
     log_config::{construct_log_file_path, get_date_from_log_file_name},
     log_item::{LogItem, LogItemList},
+    log_pager::search::mark_search_result,
 };
 
 use super::{
@@ -70,19 +71,6 @@ impl PagingAllPager {
         self.update_colored_lines();
     }
 
-    fn mark_search_result<'h>(&self, s: &'h str) -> Result<Cow<'h, str>, regex::Error> {
-        let search_pattern = &self.search_pattern;
-        let regex = regex::Regex::new(search_pattern)?;
-        // Use regular expressions to replace matching parts
-        let result = regex.replace_all(s, |caps: &regex::Captures| {
-            // Get the matched text
-            let matched_text = caps.get(0).map(|m| m.as_str()).unwrap_or("");
-            // Highlight the matching text
-            matched_text.black().on_white().to_string()
-        });
-        Ok(result)
-    }
-
     fn goto_page_begin(&mut self) {
         self.set_begin_line_index(0);
     }
@@ -96,9 +84,8 @@ impl PagingAllPager {
     fn highlight_log_item(&self, log_item: &LogItem) -> String {
         let date_str = format!("[{}]", log_item.date_time().format("%Y-%m-%d %H:%M"));
         let content = log_item.content();
-        let content = self
-            .mark_search_result(content)
-            .unwrap_or(Cow::Borrowed(content));
+        let content =
+            mark_search_result(&self.search_pattern, content).unwrap_or(Cow::Borrowed(content));
         format!("{} {}", date_str.green(), content)
     }
 
