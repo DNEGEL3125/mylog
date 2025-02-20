@@ -2,11 +2,7 @@ use std::borrow::Cow;
 
 use crossterm::style::Stylize;
 
-pub fn mark_search_result<'h>(
-    search_pattern: &str,
-    s: &'h str,
-) -> Result<Cow<'h, str>, regex::Error> {
-    let regex = regex::Regex::new(search_pattern)?;
+pub fn mark_search_result<'h>(regex: &regex::Regex, s: &'h str) -> Cow<'h, str> {
     // Use regular expressions to replace matching parts
     let result = regex.replace_all(s, |caps: &regex::Captures| {
         // Get the matched text
@@ -14,5 +10,5 @@ pub fn mark_search_result<'h>(
         // Highlight the matching text
         matched_text.black().on_white().to_string()
     });
-    Ok(result)
+    result
 }

@@ -37,7 +37,7 @@ pub struct PagingAllPager {
     terminal_total_cols: u16,
     colored_lines: Vec<String>,
     is_exit: bool,
-    search_pattern: String,
+    search_pattern: Option<regex::Regex>,
     search_pattern_input: String,
 }
 
@@ -55,7 +55,7 @@ impl PagingAllPager {
             terminal_total_cols,
             colored_lines: Vec::new(),
             is_exit: false,
-            search_pattern: String::new(),
+            search_pattern: None,
             search_pattern_input: String::new(),
         };
 
@@ -81,12 +81,16 @@ impl PagingAllPager {
         self.set_begin_line_index(original_page_range.begin + diff);
     }
 
-    fn highlight_log_item(&self, log_item: &LogItem) -> String {
+    fn highlight_log_item<'h>(&self, log_item: &'h LogItem) -> String {
         let date_str = format!("[{}]", log_item.date_time().format("%Y-%m-%d %H:%M"));
-        let content = log_item.content();
-        let content =
-            mark_search_result(&self.search_pattern, content).unwrap_or(Cow::Borrowed(content));
-        format!("{} {}", date_str.green(), content)
+        let content: &str = log_item.content();
+        let new_content: Cow<'h, str>;
+        if let Some(regex) = &self.search_pattern {
+            new_content = mark_search_result(regex, content);
+        } else {
+            new_content = Cow::Borrowed(content);
+        }
+        format!("{} {}", date_str.green(), new_content)
     }
 
     /// Splits the log content into lines that fit within the terminal width,
@@ -125,8 +129,12 @@ impl PagingAllPager {
     }
 
     fn confirm_search(&mut self) {
-        self.search_pattern = self.search_pattern_input.clone();
-        self.search_pattern_input.clear();
+        let search_pattern_input = &mut self.search_pattern_input;
+        self.search_pattern = match regex::Regex::new(search_pattern_input) {
+            Ok(result) => Some(result),
+            Err(_) => None,
+        };
+        search_pattern_input.clear();
         self.update_colored_lines();
         self.enter_view_mode();
     }
