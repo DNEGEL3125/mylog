@@ -192,8 +192,8 @@ impl PagingAllPager {
             ViewEvent::GotoPageBegin => self.goto_page_begin(),
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),
-            ViewEvent::SearchNext => Search::search_next(self as &mut dyn Pager),
-            ViewEvent::SearchPrev => Search::search_prev(self as &mut dyn Pager),
+            ViewEvent::SearchNext => self.search_next(),
+            ViewEvent::SearchPrev => self.search_prev(),
             _ => {}
         }
 

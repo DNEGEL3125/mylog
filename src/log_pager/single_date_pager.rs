@@ -339,23 +339,6 @@ impl SingleDatePager {
         self.is_exit = true;
     }
 
-    fn search_next(&mut self) {
-        let target_str: String = "\0"
-            .on_white()
-            .to_string()
-            .split_once('\0')
-            .unwrap()
-            .1
-            .to_owned();
-        let lines_to_skip = self.begin_line_index() + 1;
-        for (line_index, line) in self.colored_lines.iter().enumerate().skip(lines_to_skip) {
-            if line.contains(&target_str) {
-                self.set_begin_line_index(line_index);
-                break;
-            }
-        }
-    }
-
     fn handle_view_event(&mut self, event: ViewEvent) {
         self.clear_error_message();
         match event {
@@ -367,8 +350,8 @@ impl SingleDatePager {
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
-            ViewEvent::SearchNext => Search::search_next(self as &mut dyn Pager),
-            ViewEvent::SearchPrev => Search::search_prev(self as &mut dyn Pager),
+            ViewEvent::SearchNext => self.search_next(),
+            ViewEvent::SearchPrev => self.search_prev(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),

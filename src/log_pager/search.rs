@@ -8,7 +8,10 @@ pub trait Search {
     fn search_next(&mut self);
     fn search_prev(&mut self);
 }
-impl Search for dyn Pager {
+impl<T> Search for T
+where
+    T: Pager,
+{
     fn search_next(&mut self) {
         let target_str: String = "\0"
             .on_white()
