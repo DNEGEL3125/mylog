@@ -1,5 +1,6 @@
 pub mod command;
 pub mod events;
+pub mod pager;
 pub mod pager_mode;
 pub mod paging_all_pager;
 pub mod range;

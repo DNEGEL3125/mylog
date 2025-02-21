@@ -21,8 +21,10 @@ use crate::{
 
 use super::{
     events::{search_event::SearchEvent, view_event::ViewEvent},
+    pager::Pager,
     pager_mode::PagerMode,
     range::Range,
+    search::Search,
     utils::{get_char_index_by_line_index, get_line_index_by_char_index},
 };
 
@@ -190,6 +192,7 @@ impl PagingAllPager {
             ViewEvent::GotoPageBegin => self.goto_page_begin(),
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),
+            ViewEvent::SearchNext => Search::search_next(self as &mut dyn Pager),
             _ => {}
         }
 
@@ -318,11 +321,21 @@ impl PagingAllPager {
         disable_raw_mode().expect("Unable to diable raw mode");
     }
 
-    fn set_begin_line_index(&mut self, line_index: usize) {
-        self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
-    }
-
     pub fn total_content_lines(&self) -> usize {
         self.colored_lines.len()
+    }
+}
+
+impl Pager for PagingAllPager {
+    fn begin_line_index(&self) -> usize {
+        get_line_index_by_char_index(&self.colored_lines, self.begin_char_index).unwrap()
+    }
+
+    fn colored_lines(&self) -> &Vec<String> {
+        &self.colored_lines
+    }
+
+    fn set_begin_line_index(&mut self, line_index: usize) {
+        self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
     }
 }
