@@ -8,8 +8,10 @@ use super::command;
 use super::events::command_event::CommandEvent;
 use super::events::search_event::SearchEvent;
 use super::events::view_event::ViewEvent;
+use super::pager::Pager;
 use super::pager_mode::PagerMode;
 use super::range::Range;
+use super::search::Search;
 use super::utils::{get_char_index_by_line_index, get_line_index_by_char_index};
 use chrono::{Datelike, Days, NaiveDate};
 use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize};
@@ -75,14 +77,6 @@ impl SingleDatePager {
 
     pub fn total_content_lines(&self) -> usize {
         self.colored_lines.len()
-    }
-
-    fn begin_line_index(&self) -> usize {
-        get_line_index_by_char_index(&self.colored_lines, self.begin_char_index).unwrap()
-    }
-
-    fn set_begin_line_index(&mut self, line_index: usize) {
-        self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
     }
 
     fn page_range(&self) -> Range {
@@ -362,29 +356,6 @@ impl SingleDatePager {
         }
     }
 
-    fn search_prev(&mut self) {
-        let target_str: String = "\0"
-            .on_white()
-            .to_string()
-            .split_once('\0')
-            .unwrap()
-            .1
-            .to_owned();
-        let lines_to_take: usize = self.begin_line_index();
-        for (line_index, line) in self
-            .colored_lines
-            .iter()
-            .enumerate()
-            .take(lines_to_take)
-            .rev()
-        {
-            if line.contains(&target_str) {
-                self.set_begin_line_index(line_index);
-                break;
-            }
-        }
-    }
-
     fn handle_view_event(&mut self, event: ViewEvent) {
         self.clear_error_message();
         match event {
@@ -396,8 +367,8 @@ impl SingleDatePager {
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
-            ViewEvent::SearchNext => self.search_next(),
-            ViewEvent::SearchPrev => self.search_prev(),
+            ViewEvent::SearchNext => Search::search_next(self as &mut dyn Pager),
+            ViewEvent::SearchPrev => Search::search_prev(self as &mut dyn Pager),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),
@@ -510,11 +481,27 @@ impl SingleDatePager {
     }
 }
 
+impl Pager for SingleDatePager {
+    fn begin_line_index(&self) -> usize {
+        get_line_index_by_char_index(&self.colored_lines, self.begin_char_index).unwrap()
+    }
+
+    fn colored_lines(&self) -> &Vec<String> {
+        &self.colored_lines
+    }
+
+    fn set_begin_line_index(&mut self, line_index: usize) {
+        self.begin_char_index = get_char_index_by_line_index(&self.colored_lines, line_index);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::path::PathBuf;
 
     use chrono::NaiveDate;
+
+    use crate::log_pager::pager::Pager;
 
     use super::SingleDatePager;
 
