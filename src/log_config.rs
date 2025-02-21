@@ -59,7 +59,7 @@ pub fn get_date_from_log_file_name(file_name: &str) -> Option<NaiveDate> {
         None
     } else {
         NaiveDate::parse_from_str(&file_name.replace(".log", ""), "%Y-%m-%d")
-            .map(|x| Some(x))
+            .map(Some)
             .unwrap_or(None)
     }
 }
