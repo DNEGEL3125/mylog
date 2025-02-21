@@ -9,7 +9,7 @@ pub enum Commands {
     /// Writes a message to the log file
     Write {
         /// The message to write
-        #[arg(help = "The content of the message you want to write.")]
+        #[arg(short, long, help = "The content of the message you want to write.")]
         message: Option<String>,
 
         /// Print more output
