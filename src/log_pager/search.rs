@@ -6,6 +6,7 @@ use super::pager::Pager;
 
 pub trait Search {
     fn search_next(&mut self);
+    fn search_prev(&mut self);
 }
 impl Search for dyn Pager {
     fn search_next(&mut self) {
@@ -18,6 +19,29 @@ impl Search for dyn Pager {
             .to_owned();
         let lines_to_skip = self.begin_line_index() + 1;
         for (line_index, line) in self.colored_lines().iter().enumerate().skip(lines_to_skip) {
+            if line.contains(&target_str) {
+                self.set_begin_line_index(line_index);
+                break;
+            }
+        }
+    }
+
+    fn search_prev(&mut self) {
+        let target_str: String = "\0"
+            .on_white()
+            .to_string()
+            .split_once('\0')
+            .unwrap()
+            .1
+            .to_owned();
+        let lines_to_take: usize = self.begin_line_index();
+        for (line_index, line) in self
+            .colored_lines()
+            .iter()
+            .enumerate()
+            .take(lines_to_take)
+            .rev()
+        {
             if line.contains(&target_str) {
                 self.set_begin_line_index(line_index);
                 break;
