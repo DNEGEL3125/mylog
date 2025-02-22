@@ -139,6 +139,7 @@ impl PagingAllPager {
         search_pattern_input.clear();
         self.update_colored_lines();
         self.enter_view_mode();
+        self.search_next(false);
     }
 
     fn content(&self) -> String {
