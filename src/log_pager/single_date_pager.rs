@@ -533,6 +533,38 @@ mod test {
         }
     }
 
+    #[test]
+    fn test_search_prev() {
+        let mut pager = SingleDatePager::new(NaiveDate::default(), PathBuf::default());
+        let pager_rows: usize = 9999999;
+        let pager_content: &str = r#"[2025-2-21 13:50] Rust is fast
+Python is slow
+C++ is faster than Rust
+Java is faster than Python
+55 * 33 = 1815
+(a - b) * c = ac - bc
+(a + b)**2 = a**2 + 2ab + b**2"#;
+        pager.log_item_list = LogItemList::from_str(pager_content).unwrap();
+
+        pager.resize(pager_rows as u16, 20000);
+        pager.search_pattern = Some(regex::Regex::new("fast").unwrap());
+        pager.update_colored_lines();
+        pager.search_prev();
+        assert_eq!(pager.begin_line_index(), 0);
+        pager.set_begin_line_index(3);
+        pager.search_prev();
+        assert_eq!(pager.begin_line_index(), 2);
+
+        pager.search_pattern = Some(regex::Regex::new(r"\d+").unwrap());
+        pager.update_colored_lines();
+        pager.set_begin_line_index(1);
+        pager.search_prev();
+        assert_eq!(pager.begin_line_index(), 1);
+        pager.set_begin_line_index(6);
+        pager.search_prev();
+        assert_eq!(pager.begin_line_index(), 4);
+    }
+
     // mod resize {
     //     struct TestConfig {
     //         log_dir: PathBuf,
