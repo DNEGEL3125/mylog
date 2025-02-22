@@ -192,7 +192,7 @@ impl PagingAllPager {
             ViewEvent::GotoPageBegin => self.goto_page_begin(),
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::EnterSearchMode => self.enter_search_mode(),
-            ViewEvent::SearchNext => self.search_next(),
+            ViewEvent::SearchNext => self.search_next(true),
             ViewEvent::SearchPrev => self.search_prev(),
             _ => {}
         }

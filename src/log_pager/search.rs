@@ -5,14 +5,14 @@ use crossterm::style::Stylize;
 use super::pager::Pager;
 
 pub trait Search {
-    fn search_next(&mut self);
+    fn search_next(&mut self, skip_current_line: bool);
     fn search_prev(&mut self);
 }
 impl<T> Search for T
 where
     T: Pager,
 {
-    fn search_next(&mut self) {
+    fn search_next(&mut self, skip_current_line: bool) {
         let target_str: String = "\0"
             .on_white()
             .to_string()
@@ -20,7 +20,7 @@ where
             .unwrap()
             .1
             .to_owned();
-        let lines_to_skip = self.begin_line_index() + 1;
+        let lines_to_skip = self.begin_line_index() + if skip_current_line { 1 } else { 0 };
         for (line_index, line) in self.colored_lines().iter().enumerate().skip(lines_to_skip) {
             if line.contains(&target_str) {
                 self.set_begin_line_index(line_index);

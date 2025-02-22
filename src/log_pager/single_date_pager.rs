@@ -350,7 +350,7 @@ impl SingleDatePager {
             ViewEvent::GotoPageEnd => self.goto_page_end(),
             ViewEvent::Quit => self.exit(),
             ViewEvent::Edit => self.edit().expect("Unable to edit the file"),
-            ViewEvent::SearchNext => self.search_next(),
+            ViewEvent::SearchNext => self.search_next(true),
             ViewEvent::SearchPrev => self.search_prev(),
             ViewEvent::Resize(columns, rows) => self.resize(columns, rows),
             ViewEvent::EnterCommandMode => self.enter_command_mode(),
@@ -412,7 +412,7 @@ impl SingleDatePager {
         search_pattern_input.clear();
         self.update_colored_lines();
         self.enter_view_mode();
-        self.search_next();
+        self.search_next(false);
     }
 
     fn handle_search_event(&mut self, event: SearchEvent) {
@@ -517,7 +517,7 @@ mod test {
         pager.update_colored_lines();
         for (i, line) in lines.iter().enumerate() {
             if line.contains("the") && i != 0 {
-                pager.search_next();
+                pager.search_next(true);
                 assert_eq!(i, pager.begin_line_index());
             }
         }
@@ -527,7 +527,7 @@ mod test {
         pager.update_colored_lines();
         for (i, line) in lines.iter().enumerate() {
             if line.contains('3') && i != 0 {
-                pager.search_next();
+                pager.search_next(true);
                 assert_eq!(i, pager.begin_line_index());
             }
         }
