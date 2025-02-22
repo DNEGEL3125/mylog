@@ -480,11 +480,14 @@ impl Pager for SingleDatePager {
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::{path::PathBuf, str::FromStr};
 
     use chrono::NaiveDate;
 
-    use crate::log_pager::pager::Pager;
+    use crate::{
+        log_item::LogItemList,
+        log_pager::{pager::Pager, search::Search},
+    };
 
     use super::SingleDatePager;
 
@@ -500,6 +503,36 @@ mod test {
         pager.set_begin_line_index(2);
         assert_eq!(pager.begin_line_index(), 2);
     }
+
+    #[test]
+    fn test_search_next() {
+        let mut pager = SingleDatePager::new(NaiveDate::default(), PathBuf::default());
+        let pager_rows: usize = 15;
+        let pager_content: &str = "[2025-2-21 20:20] The darkest valley, the highest mountain, we walk in the name of our brave. The rushing river, the blooming flowers, descend from heaven we embrace. The steps we take, and the pain from journy could never ever bring us down. The keys discovered, the new worlds opened, let's run and catch the dawn. 合抱之木生于毫末；九层之台起于垒土；千里之行始于足下 2304\n\n<qwq>QAQ</qwq>\n\nIGNORE\n\n93";
+        let lines = textwrap::wrap(pager_content, pager_rows);
+        pager.log_item_list = LogItemList::from_str(pager_content).unwrap();
+
+        pager.resize(pager_rows as u16, lines.len() as u16);
+        pager.search_pattern = Some(regex::Regex::new("the").unwrap());
+        pager.update_colored_lines();
+        for (i, line) in lines.iter().enumerate() {
+            if line.contains("the") && i != 0 {
+                pager.search_next();
+                assert_eq!(i, pager.begin_line_index());
+            }
+        }
+
+        pager.set_begin_line_index(0);
+        pager.search_pattern = Some(regex::Regex::new(r"\d+").unwrap());
+        pager.update_colored_lines();
+        for (i, line) in lines.iter().enumerate() {
+            if line.contains('3') && i != 0 {
+                pager.search_next();
+                assert_eq!(i, pager.begin_line_index());
+            }
+        }
+    }
+
     // mod resize {
     //     struct TestConfig {
     //         log_dir: PathBuf,
