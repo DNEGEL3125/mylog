@@ -143,3 +143,29 @@ impl LogItemList {
         Self { items: Vec::new() }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+
+    use chrono::NaiveDateTime;
+
+    use super::LogItemList;
+
+    #[test]
+    fn test_log_item_list_from_str() {
+        let s = r#"[2023-5-23 01:33] qwq
+[2023-12-1 11:22] mylog
+[2024-1-2 14:59] test"#;
+
+        let dates = ["2023-5-23 01:33", "2023-12-1 11:22", "2024-1-2 14:59"]
+            .map(|x| NaiveDateTime::parse_from_str(x, "%Y-%m-%d %H:%M").unwrap());
+        let contetns = ["qwq", "mylog", "test"];
+
+        let log_item_list = LogItemList::from_str(s).unwrap();
+        for (i, item) in log_item_list.iter().enumerate() {
+            assert_eq!(item.date_time(), dates.get(i).unwrap());
+            assert_eq!(item.content(), contetns[i])
+        }
+    }
+}
