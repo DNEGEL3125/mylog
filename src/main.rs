@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::process::ExitCode;
 use std::{path::PathBuf, process::exit};
 
 use chrono::Datelike;
@@ -128,7 +129,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     LogConfig::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
     let log_config = log_config::LogConfig::from_config_file(config_file_path.as_path());
@@ -140,7 +141,7 @@ fn main() {
             log_dir_path.display(),
             config_file_path.display()
         );
-        exit(1);
+        return ExitCode::FAILURE;
     }
 
     // Command line parameters
@@ -158,7 +159,7 @@ fn main() {
 
             if message_string.trim().is_empty() {
                 println!("Aborting due to empty log message.");
-                exit(-9320);
+                return ExitCode::FAILURE;
             }
             write_log(&message_string, verbose, &log_dir_path);
         }
@@ -166,7 +167,8 @@ fn main() {
         cli::Commands::Edit { date, verbose } => {
             edit_logs(date, verbose, &log_dir_path);
         }
-    }
+    };
+    ExitCode::SUCCESS
 }
 
 /// Opens a temporary file in the user's default editor, waits for editing to complete,
