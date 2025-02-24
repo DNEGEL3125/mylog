@@ -1,6 +1,6 @@
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::ExitCode;
-use std::{path::PathBuf, process::exit};
 
 use chrono::Datelike;
 use chrono::NaiveDate;
@@ -48,29 +48,27 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
     Ok(date)
 }
 
-fn view_logs(date_str: Option<String>, all: bool, verbose: bool, log_dir_path: &PathBuf) {
+fn view_logs(
+    date_str: Option<String>,
+    all: bool,
+    verbose: bool,
+    log_dir_path: &PathBuf,
+) -> Result<(), String> {
     let today_date = get_today_date();
 
     if all {
         PagingAllPager::new(log_dir_path.to_path_buf()).run();
-        return;
+        return Ok(());
     }
 
-    let date_result = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str),
+    let date = match date_str {
+        Some(date_str) => parse_date_from_str(&date_str)?,
         // Default date is today
-        None => Ok(today_date),
-    };
-
-    let date = match date_result {
-        Ok(date) => date,
-        Err(msg) => {
-            println!("{}", msg);
-            exit(-966);
-        }
+        None => today_date,
     };
 
     paging_log_file_by_date(log_dir_path, date, verbose);
+    Ok(())
 }
 
 fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
@@ -90,20 +88,13 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
     LogItem::append_to_file(&log_item, &log_file_path, verbose);
 }
 
-fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) {
+fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
     let today_date = get_today_date();
-    let date_result = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str),
-        // Default date is today
-        None => Ok(today_date),
-    };
 
-    let date = match date_result {
-        Ok(date) => date,
-        Err(msg) => {
-            println!("{}", msg);
-            exit(-966);
-        }
+    let date = match date_str {
+        Some(date_str) => parse_date_from_str(&date_str)?,
+        // Default date is today
+        None => today_date,
     };
 
     let log_file_path = construct_log_file_path(log_dir_path, &date);
@@ -123,10 +114,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) {
         }
     }
 
-    let res = edit::edit_file(log_file_path);
-    if res.is_err() {
-        println!("Can't edit the file");
-    }
+    edit::edit_file(log_file_path).or(Err(String::from("Unable to edit the file")))
 }
 
 fn main() -> ExitCode {
@@ -148,7 +136,10 @@ fn main() -> ExitCode {
     let cli = cli::Cli::parse();
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
-            view_logs(date, all, verbose, &log_dir_path);
+            if let Err(error_message) = view_logs(date, all, verbose, &log_dir_path) {
+                eprintln!("{}", error_message);
+                return ExitCode::FAILURE;
+            }
         }
         cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
@@ -165,7 +156,10 @@ fn main() -> ExitCode {
         }
         cli::Commands::Config { .. } => todo!(),
         cli::Commands::Edit { date, verbose } => {
-            edit_logs(date, verbose, &log_dir_path);
+            if let Err(error_message) = edit_logs(date, verbose, &log_dir_path) {
+                eprintln!("{}", error_message);
+                return ExitCode::FAILURE;
+            }
         }
     };
     ExitCode::SUCCESS
