@@ -31,6 +31,10 @@ impl LogConfig {
         create_dir_all(config_dir_path).expect("Can't create config file");
         let file = File::create(config_file_path).expect("Can't create config file");
         LogConfig::default().write_to_file(&file);
+        println!(
+            "Created the config file in `{}`",
+            config_file_path.display()
+        );
     }
 
     pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> LogConfig {
