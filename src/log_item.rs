@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::exit, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use chrono::NaiveDateTime;
 
@@ -67,28 +67,15 @@ impl LogItem {
         &self.content
     }
 
-    pub fn append_to_file(&self, log_file_path: &PathBuf, verbose: bool) {
-        let result = append_str_to_file(log_file_path, &self.to_string());
-        if result.is_err() {
-            println!("Can't write message to the log file");
-            exit(3);
-        }
-
-        if verbose {
-            println!(
-                r#"Written the log message to "{}""#,
-                log_file_path.display()
-            );
-        } else {
-            println!(
-                r#"Written the log message to "{}""#,
-                log_file_path
-                    .file_name()
-                    .expect("Isn't a filename")
-                    .to_str()
-                    .expect("Invalid Unicode")
-            );
-        }
+    pub fn append_to_file(&self, log_file_path: &PathBuf) -> Result<(), String> {
+        append_str_to_file(log_file_path, &self.to_string())
+            .map_err(|_| {
+                format!(
+                    "Unable to write the message to `{}`",
+                    log_file_path.display()
+                )
+            })
+            .map(|_| ())
     }
 }
 

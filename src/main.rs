@@ -71,7 +71,7 @@ fn view_logs(
     Ok(())
 }
 
-fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
+fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
     let date_time_now = date_time_now();
     let today_date = date_time_now.date();
 
@@ -85,7 +85,24 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) {
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
 
-    LogItem::append_to_file(&log_item, &log_file_path, verbose);
+    LogItem::append_to_file(&log_item, &log_file_path)?;
+
+    if verbose {
+        println!(
+            r#"Written the log message to "{}""#,
+            log_file_path.display()
+        );
+    } else {
+        println!(
+            r#"Written the log message to "{}""#,
+            log_file_path
+                .file_name()
+                .expect("Isn't a filename")
+                .to_str()
+                .expect("Invalid Unicode")
+        );
+    }
+    Ok(())
 }
 
 fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
@@ -152,7 +169,10 @@ fn main() -> ExitCode {
                 println!("Aborting due to empty log message.");
                 return ExitCode::FAILURE;
             }
-            write_log(&message_string, verbose, &log_dir_path);
+            if let Err(error_message) = write_log(&message_string, verbose, &log_dir_path) {
+                eprintln!("{}", error_message);
+                return ExitCode::FAILURE;
+            }
         }
         cli::Commands::Config { .. } => todo!(),
         cli::Commands::Edit { date, verbose } => {
