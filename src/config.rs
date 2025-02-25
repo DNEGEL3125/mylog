@@ -77,7 +77,7 @@ mod test {
         log_config.log.directory = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
         std::mem::drop(test_config_file);
-        assert_eq!(log_config, Config::from_config_file(&file_path));
+        assert_eq!(Ok(log_config), Config::from_config_file(&file_path));
         std::fs::remove_file(&file_path).expect("Unable to delete the file");
     }
 }
