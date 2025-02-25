@@ -91,31 +91,23 @@ impl FromStr for LogItemList {
         let mut current_log = String::new();
 
         for line in s.lines() {
-            if LogItem::from_str(line).is_err() {
+            if current_log.is_empty() {
+                // Do nothing
+            } else if LogItem::from_str(line).is_err() {
                 current_log.push('\n');
-            } else {
-                match LogItem::from_str(&current_log) {
-                    Ok(parsed_item) => {
-                        if !current_log.is_empty() {
-                            log_items.push(parsed_item);
-                            current_log.clear();
-                        }
-                    }
-                    Err(_) => {}
-                }
+            } else if let Ok(parsed_item) = LogItem::from_str(&current_log) {
+                log_items.push(parsed_item);
+                current_log.clear();
             }
             current_log.push_str(line);
         }
 
-        match LogItem::from_str(&current_log) {
-            Ok(parsed_item) => {
-                if !current_log.is_empty() {
-                    log_items.push(parsed_item);
-                    current_log.clear();
-                }
-            }
-            Err(_) => {}
-        };
+        if current_log.is_empty() {
+            // Do nothing
+        } else if let Ok(parsed_item) = LogItem::from_str(&current_log) {
+            log_items.push(parsed_item);
+            current_log.clear();
+        }
 
         Ok(LogItemList { items: log_items })
     }
