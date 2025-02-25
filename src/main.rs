@@ -134,35 +134,25 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
     edit::edit_file(log_file_path).or(Err(String::from("Unable to edit the file")))
 }
 
-fn main() -> ExitCode {
+fn run() -> Result<(), String> {
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let log_config = match config::Config::from_config_file(config_file_path.as_path()) {
-        Ok(log_config) => log_config,
-        Err(error) => {
-            eprintln!("Fail to read the configuration:\n{}", error);
-            return ExitCode::FAILURE;
-        }
-    };
+    let log_config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = log_config.log.directory;
 
     if !log_dir_path.exists() {
-        println!(
+        return Err(format!(
             "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
             log_dir_path.display(),
             config_file_path.display()
-        );
-        return ExitCode::FAILURE;
+        ));
     }
 
     // Command line parameters
     let cli = cli::Cli::parse();
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
-            if let Err(error_message) = view_logs(date, all, verbose, &log_dir_path) {
-                eprintln!("{}", error_message);
-                return ExitCode::FAILURE;
-            }
+            view_logs(date, all, verbose, &log_dir_path)?;
         }
         cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
@@ -172,23 +162,25 @@ fn main() -> ExitCode {
             };
 
             if message_string.trim().is_empty() {
-                println!("Aborting due to empty log message.");
-                return ExitCode::FAILURE;
+                return Err(String::from("Aborting due to empty log message."));
             }
-            if let Err(error_message) = write_log(&message_string, verbose, &log_dir_path) {
-                eprintln!("{}", error_message);
-                return ExitCode::FAILURE;
-            }
+            write_log(&message_string, verbose, &log_dir_path)?;
         }
         cli::Commands::Config { .. } => todo!(),
         cli::Commands::Edit { date, verbose } => {
-            if let Err(error_message) = edit_logs(date, verbose, &log_dir_path) {
-                eprintln!("{}", error_message);
-                return ExitCode::FAILURE;
-            }
+            edit_logs(date, verbose, &log_dir_path)?;
         }
     };
-    ExitCode::SUCCESS
+    Ok(())
+}
+
+fn main() -> ExitCode {
+    if let Err(error_message) = run() {
+        eprintln!("error: {}", error_message);
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 /// Opens a temporary file in the user's default editor, waits for editing to complete,
