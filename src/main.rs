@@ -137,7 +137,13 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
 fn main() -> ExitCode {
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let log_config = config::Config::from_config_file(config_file_path.as_path());
+    let log_config = match config::Config::from_config_file(config_file_path.as_path()) {
+        Ok(log_config) => log_config,
+        Err(error) => {
+            eprintln!("Fail to read the configuration:\n{}", error);
+            return ExitCode::FAILURE;
+        }
+    };
     let log_dir_path = log_config.log.directory;
 
     if !log_dir_path.exists() {

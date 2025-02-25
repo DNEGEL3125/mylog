@@ -34,12 +34,12 @@ impl Config {
         );
     }
 
-    pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> Config {
+    pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> Result<Config, String> {
         let mut file = File::open(file_path).expect("Can't create the config file");
         let mut content = String::new();
         file.read_to_string(&mut content)
-            .expect("Can't read the config file");
-        toml::from_str(&content).expect("Invalid toml file")
+            .map_err(|_| "Can't read the config file")?;
+        toml::from_str(&content).map_err(|error| error.message().to_string())
     }
 
     fn write_to_file(&self, mut file: &File) {
