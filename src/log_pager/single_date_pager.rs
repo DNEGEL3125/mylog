@@ -18,7 +18,7 @@ use crossterm::style::{ContentStyle, Print, PrintStyledContent, StyledContent, S
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear};
 use crossterm::{cursor, execute, queue};
 
-use crate::log_config::construct_log_file_path;
+use crate::config::construct_log_file_path;
 use crate::log_item::{LogItem, LogItemList};
 use crate::log_pager::search::mark_search_result;
 use crate::utils::time::get_today_date;

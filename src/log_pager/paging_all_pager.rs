@@ -14,7 +14,7 @@ use crossterm::{
 };
 
 use crate::{
-    log_config::{construct_log_file_path, get_date_from_log_file_name},
+    config::{construct_log_file_path, get_date_from_log_file_name},
     log_item::{LogItem, LogItemList},
     log_pager::search::mark_search_result,
 };
