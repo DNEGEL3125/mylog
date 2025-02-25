@@ -8,17 +8,14 @@ use std::{
 
 use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
 
-#[derive(Deserialize, Serialize, PartialEq, Debug)]
-pub struct Config {
-    pub log_dir_path: PathBuf,
+#[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
+pub struct LogConfig {
+    pub directory: PathBuf,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            log_dir_path: PathBuf::new(),
-        }
-    }
+#[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
+pub struct Config {
+    pub log: LogConfig,
 }
 
 impl Config {
@@ -76,7 +73,7 @@ mod test {
     fn test_loading_and_generating_config_file() {
         let (test_config_file, file_path) = crate::utils::fs::create_unique_temp_file();
         let mut log_config = Config::default();
-        log_config.log_dir_path = "/var/log/mylog".into();
+        log_config.log.directory = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
         std::mem::drop(test_config_file);
         assert_eq!(log_config, Config::from_config_file(&file_path));
