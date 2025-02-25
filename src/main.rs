@@ -5,7 +5,7 @@ use std::process::ExitCode;
 use chrono::Datelike;
 use chrono::NaiveDate;
 use clap::Parser;
-use config::{construct_log_file_path, LogConfig};
+use config::{construct_log_file_path, Config};
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
 use log_pager::single_date_pager::SingleDatePager;
@@ -135,9 +135,9 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
 }
 
 fn main() -> ExitCode {
-    LogConfig::create_config_file_if_not_exists();
+    Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let log_config = config::LogConfig::from_config_file(config_file_path.as_path());
+    let log_config = config::Config::from_config_file(config_file_path.as_path());
     let log_dir_path = log_config.log_dir_path;
 
     if !log_dir_path.exists() {

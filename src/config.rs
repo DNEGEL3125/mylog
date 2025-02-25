@@ -9,11 +9,11 @@ use std::{
 use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
 
 #[derive(Deserialize, Serialize, PartialEq, Debug)]
-pub struct LogConfig {
+pub struct Config {
     pub log_dir_path: PathBuf,
 }
 
-impl Default for LogConfig {
+impl Default for Config {
     fn default() -> Self {
         Self {
             log_dir_path: PathBuf::new(),
@@ -21,7 +21,7 @@ impl Default for LogConfig {
     }
 }
 
-impl LogConfig {
+impl Config {
     pub fn create_config_file_if_not_exists() {
         let config_dir_path: &PathBuf = &CONFIG_DIR_PATH;
         let config_file_path: &PathBuf = &CONFIG_FILE_PATH;
@@ -30,14 +30,14 @@ impl LogConfig {
         }
         create_dir_all(config_dir_path).expect("Can't create config file");
         let file = File::create(config_file_path).expect("Can't create config file");
-        LogConfig::default().write_to_file(&file);
+        Config::default().write_to_file(&file);
         println!(
             "Created the config file in `{}`",
             config_file_path.display()
         );
     }
 
-    pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> LogConfig {
+    pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> Config {
         let mut file = File::open(file_path).expect("Can't create the config file");
         let mut content = String::new();
         file.read_to_string(&mut content)
@@ -70,16 +70,16 @@ pub fn get_date_from_log_file_name(file_name: &str) -> Option<NaiveDate> {
 
 #[cfg(test)]
 mod test {
-    use super::LogConfig;
+    use super::Config;
 
     #[test]
     fn test_loading_and_generating_config_file() {
         let (test_config_file, file_path) = crate::utils::fs::create_unique_temp_file();
-        let mut log_config = LogConfig::default();
+        let mut log_config = Config::default();
         log_config.log_dir_path = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
         std::mem::drop(test_config_file);
-        assert_eq!(log_config, LogConfig::from_config_file(&file_path));
+        assert_eq!(log_config, Config::from_config_file(&file_path));
         std::fs::remove_file(&file_path).expect("Unable to delete the file");
     }
 }
