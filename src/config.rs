@@ -19,6 +19,13 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn get_field_by_key(&self, key: &str) -> Option<&str> {
+        match key {
+            "log.directory" => self.log.directory.to_str(),
+            _ => None,
+        }
+    }
+
     pub fn create_config_file_if_not_exists() {
         let config_dir_path: &PathBuf = &CONFIG_DIR_PATH;
         let config_file_path: &PathBuf = &CONFIG_FILE_PATH;
