@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
 
-use chrono::Datelike;
 use chrono::NaiveDate;
 use clap::Parser;
 use config::{construct_log_file_path, Config};
@@ -25,28 +24,13 @@ fn paging_log_file_by_date(log_dir_path: &PathBuf, date: NaiveDate, verbose: boo
     log_pager.run();
 }
 
-fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, String> {
-    let err_msg_template = format!("Invalid date '{}'.", date_str);
-    let date_str_parts: Vec<&str> = date_str.split('-').collect();
-    let parts_count = date_str_parts.len();
-    let date = match parts_count {
-        2 => {
-            let today = get_today_date();
-            let month: u32 = date_str_parts[0].parse().map_err(|_| &err_msg_template)?;
-            let day: u32 = date_str_parts[1].parse().map_err(|_| &err_msg_template)?;
-            today
-                .with_month(month)
-                .ok_or(&err_msg_template)?
-                .with_day(day)
-                .ok_or(&err_msg_template)?
-        }
-        3 => {
-            let date_fmt = "%Y-%m-%d";
-            NaiveDate::parse_from_str(date_str, date_fmt).map_err(|_| &err_msg_template)?
-        }
-        _ => return Err(err_msg_template),
-    };
-    Ok(date)
+fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, chrono::ParseError> {
+    let today = get_today_date();
+    let date_fmt = "%Y-%m-%d";
+    NaiveDate::parse_from_str(date_str, date_fmt).or(NaiveDate::parse_from_str(
+        &format!("{}-{}", today.format("%Y"), date_str),
+        date_fmt,
+    ))
 }
 
 fn view_logs(
@@ -63,7 +47,7 @@ fn view_logs(
     }
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str)?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| error.to_string())?,
         // Default date is today
         None => today_date,
     };
@@ -110,7 +94,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
     let today_date = get_today_date();
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str)?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| error.to_string())?,
         // Default date is today
         None => today_date,
     };
@@ -230,4 +214,24 @@ fn input_log_message() -> String {
         .join("\n");
 
     cleaned_content
+}
+
+#[cfg(test)]
+mod test {
+    use chrono::{Datelike, NaiveDate};
+
+    use crate::utils::time::get_today_date;
+
+    #[test]
+    fn test_parse_date_from_str() {
+        let today = get_today_date();
+        assert_eq!(
+            super::parse_date_from_str("2024-5-12"),
+            Ok(NaiveDate::from_ymd_opt(2024, 5, 12).unwrap())
+        );
+        assert_eq!(
+            super::parse_date_from_str("12-02"),
+            Ok(today.with_day(2).unwrap().with_month(12).unwrap())
+        );
+    }
 }
