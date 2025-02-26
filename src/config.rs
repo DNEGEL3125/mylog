@@ -19,11 +19,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_field_by_key(&self, key: &str) -> Option<&str> {
+    pub fn get_by_key(&self, key: &str) -> Option<&str> {
         match key {
             "log.directory" => Some(self.log.directory.as_ref()),
             _ => None,
         }
+    }
+
+    pub fn set_by_key(&mut self, key: &str, value: String) -> Result<(), String> {
+        match key {
+            "log.directory" => {
+                self.log.directory = value;
+            }
+            _ => return Err(format!("unknown key: {}", key)),
+        }
+
+        Ok(())
     }
 
     pub fn create_config_file_if_not_exists() {
