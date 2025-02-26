@@ -153,8 +153,8 @@ fn run() -> Result<(), String> {
 
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let mut log_config = config::Config::from_config_file(config_file_path.as_path())?;
-    let log_dir_path = PathBuf::from_str(&log_config.log.directory).expect("Incorrect path");
+    let mut config = config::Config::from_config_file(config_file_path.as_path())?;
+    let log_dir_path = PathBuf::from_str(&config.log.directory).expect("Incorrect path");
 
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
@@ -174,7 +174,7 @@ fn run() -> Result<(), String> {
         }
         cli::Commands::Config { key, value } => match value {
             Some(value) => {
-                log_config.set_by_key(&key, value)?;
+                config.set_by_key(&key, value)?;
             }
             None => Err(String::from("haven't implement yet"))?,
         },
