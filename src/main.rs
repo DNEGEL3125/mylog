@@ -176,7 +176,13 @@ fn run() -> Result<(), String> {
             Some(value) => {
                 config::set_by_key(config_file_path, &key, value)?;
             }
-            None => Err(String::from("haven't implement yet"))?,
+            None => {
+                if let Some(value) = config.get_by_key(&key) {
+                    println!("{}", value)
+                } else {
+                    Err(format!("invalid key: {}", key))?
+                }
+            }
         },
         cli::Commands::Edit { date, verbose } => {
             edit_logs(date, verbose, &log_dir_path)?;
