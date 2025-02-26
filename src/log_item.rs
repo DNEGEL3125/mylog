@@ -1,8 +1,6 @@
-use std::{path::PathBuf, str::FromStr};
+use std::str::FromStr;
 
 use chrono::NaiveDateTime;
-
-use crate::utils::fs::append_str_to_file;
 
 pub enum ParseError {
     DateNotFound,
@@ -65,17 +63,6 @@ impl LogItem {
 
     pub fn content(&self) -> &str {
         &self.content
-    }
-
-    pub fn append_to_file(&self, log_file_path: &PathBuf) -> Result<(), String> {
-        append_str_to_file(log_file_path, &self.to_string())
-            .map_err(|_| {
-                format!(
-                    "Unable to write the message to `{}`",
-                    log_file_path.display()
-                )
-            })
-            .map(|_| ())
     }
 }
 

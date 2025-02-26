@@ -9,6 +9,7 @@ use config::{construct_log_file_path, Config};
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
 use log_pager::single_date_pager::SingleDatePager;
+use utils::fs::append_str_to_file;
 use utils::time::{date_time_now, get_today_date};
 
 pub mod cli;
@@ -70,7 +71,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<()
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
 
-    LogItem::append_to_file(&log_item, &log_file_path)?;
+    append_str_to_file(&log_file_path, &log_item.to_string()).map_err(|error| error.to_string())?;
 
     if verbose {
         println!(
