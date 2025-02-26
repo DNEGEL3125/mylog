@@ -121,9 +121,12 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
 }
 
 fn run() -> Result<(), String> {
+    // Command line parameters
+    let cli = cli::Cli::parse();
+
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let log_config = config::Config::from_config_file(config_file_path.as_path())?;
+    let mut log_config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&log_config.log.directory).expect("Incorrect path");
 
     if !log_dir_path.exists() {
@@ -134,8 +137,6 @@ fn run() -> Result<(), String> {
         ));
     }
 
-    // Command line parameters
-    let cli = cli::Cli::parse();
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
             view_logs(date, all, verbose, &log_dir_path)?;
@@ -152,7 +153,12 @@ fn run() -> Result<(), String> {
             }
             write_log(&message_string, verbose, &log_dir_path)?;
         }
-        cli::Commands::Config { .. } => todo!(),
+        cli::Commands::Config { key, value } => match value {
+            Some(value) => {
+                log_config.set_by_key(&key, value)?;
+            }
+            None => Err(String::from("haven't implement yet"))?,
+        },
         cli::Commands::Edit { date, verbose } => {
             edit_logs(date, verbose, &log_dir_path)?;
         }
