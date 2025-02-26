@@ -6,6 +6,7 @@ use std::str::FromStr;
 use chrono::NaiveDate;
 use clap::Parser;
 use config::{construct_log_file_path, Config};
+use constants::CONFIG_FILE_PATH;
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
 use log_pager::single_date_pager::SingleDatePager;
@@ -41,6 +42,14 @@ fn view_logs<P: AsRef<Path>>(
     log_dir_path: P,
 ) -> Result<(), String> {
     let today_date = get_today_date();
+    if !log_dir_path.as_ref().exists() {
+        let config_file_path = &CONFIG_FILE_PATH;
+        return Err(format!(
+            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
+            log_dir_path.as_ref().display(),
+            config_file_path.display()
+        ));
+    }
 
     if all {
         PagingAllPager::new(log_dir_path.as_ref().to_path_buf()).run();
@@ -60,6 +69,15 @@ fn view_logs<P: AsRef<Path>>(
 fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
     let date_time_now = date_time_now();
     let today_date = date_time_now.date();
+
+    if !log_dir_path.exists() {
+        let config_file_path = &CONFIG_FILE_PATH;
+        return Err(format!(
+            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
+            log_dir_path.display(),
+            config_file_path.display()
+        ));
+    }
 
     let log_file_path = construct_log_file_path(log_dir_path, &today_date);
 
@@ -100,6 +118,15 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
         None => today_date,
     };
 
+    if !log_dir_path.exists() {
+        let config_file_path = &CONFIG_FILE_PATH;
+        return Err(format!(
+            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
+            log_dir_path.display(),
+            config_file_path.display()
+        ));
+    }
+
     let log_file_path = construct_log_file_path(log_dir_path, &date);
 
     // If the log file does not exist, create it
@@ -128,14 +155,6 @@ fn run() -> Result<(), String> {
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
     let mut log_config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&log_config.log.directory).expect("Incorrect path");
-
-    if !log_dir_path.exists() {
-        return Err(format!(
-            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
-            log_dir_path.display(),
-            config_file_path.display()
-        ));
-    }
 
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
