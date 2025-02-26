@@ -16,4 +16,5 @@ regex = "1.11.1"
 serde = { version = "1.0.210", features = ["derive"] }
 textwrap = "0.16.1"
 toml = "0.8.19"
+toml_edit = "0.22.24"
 
