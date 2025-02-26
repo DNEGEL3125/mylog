@@ -10,7 +10,7 @@ use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to ad
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
 pub struct LogConfig {
-    pub directory: String,
+    pub dir: String,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
@@ -21,7 +21,7 @@ pub struct Config {
 impl Config {
     pub fn get_by_key(&self, key: &str) -> Option<&str> {
         match key {
-            "log.directory" => Some(self.log.directory.as_ref()),
+            "log.dir" => Some(self.log.dir.as_ref()),
             _ => None,
         }
     }
@@ -127,7 +127,7 @@ mod test {
     fn test_loading_and_generating_config_file() {
         let (test_config_file, file_path) = crate::utils::fs::create_unique_temp_file();
         let mut log_config = Config::default();
-        log_config.log.directory = "/var/log/mylog".into();
+        log_config.log.dir = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
         std::mem::drop(test_config_file);
         assert_eq!(Ok(log_config), Config::from_config_file(&file_path));

@@ -154,7 +154,7 @@ fn run() -> Result<(), String> {
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
     let config = config::Config::from_config_file(config_file_path.as_path())?;
-    let log_dir_path = PathBuf::from_str(&config.log.directory).expect("Incorrect path");
+    let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
