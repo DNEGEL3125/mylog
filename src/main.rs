@@ -174,7 +174,7 @@ fn run() -> Result<(), String> {
         }
         cli::Commands::Config { key, value } => match value {
             Some(value) => {
-                config.set_by_key(&key, value)?;
+                config::set_by_key(config_file_path, &key, value)?;
             }
             None => Err(String::from("haven't implement yet"))?,
         },
