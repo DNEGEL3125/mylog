@@ -10,7 +10,7 @@ use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to ad
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
 pub struct LogConfig {
-    pub directory: PathBuf,
+    pub directory: String,
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
@@ -21,7 +21,7 @@ pub struct Config {
 impl Config {
     pub fn get_field_by_key(&self, key: &str) -> Option<&str> {
         match key {
-            "log.directory" => self.log.directory.to_str(),
+            "log.directory" => Some(self.log.directory.as_ref()),
             _ => None,
         }
     }
