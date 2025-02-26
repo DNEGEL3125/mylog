@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::str::FromStr;
 
+use crate::error::Error;
 use chrono::NaiveDate;
 use clap::Parser;
 use config::{construct_log_file_path, Config};
@@ -16,6 +17,7 @@ use utils::time::{date_time_now, get_today_date};
 pub mod cli;
 pub mod config;
 pub mod constants;
+pub mod error;
 pub mod log_item;
 pub mod log_pager;
 pub mod utils;
@@ -40,15 +42,10 @@ fn view_logs<P: AsRef<Path>>(
     all: bool,
     verbose: bool,
     log_dir_path: P,
-) -> Result<(), String> {
+) -> Result<(), Error> {
     let today_date = get_today_date();
     if !log_dir_path.as_ref().exists() {
-        let config_file_path = &CONFIG_FILE_PATH;
-        return Err(format!(
-            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
-            log_dir_path.as_ref().display(),
-            config_file_path.display()
-        ));
+        return Err(Error::LogDirNotFound(log_dir_path.as_ref().into()));
     }
 
     if all {
@@ -57,7 +54,7 @@ fn view_logs<P: AsRef<Path>>(
     }
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| error.to_string())?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|_| Error::DateParse(date_str))?,
         // Default date is today
         None => today_date,
     };
@@ -158,7 +155,7 @@ fn run() -> Result<(), String> {
 
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
-            view_logs(date, all, verbose, &log_dir_path)?;
+            view_logs(date, all, verbose, &log_dir_path).map_err(|error| error.to_string())?;
         }
         cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
