@@ -63,17 +63,12 @@ fn view_logs<P: AsRef<Path>>(
     Ok(())
 }
 
-fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
+fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<(), Error> {
     let date_time_now = date_time_now();
     let today_date = date_time_now.date();
 
     if !log_dir_path.exists() {
-        let config_file_path = &CONFIG_FILE_PATH;
-        return Err(format!(
-            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
-            log_dir_path.display(),
-            config_file_path.display()
-        ));
+        return Err(Error::LogDirNotFound(log_dir_path.to_path_buf()));
     }
 
     let log_file_path = construct_log_file_path(log_dir_path, &today_date);
@@ -86,7 +81,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<()
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
 
-    append_str_to_file(&log_file_path, &log_item.to_string()).map_err(|error| error.to_string())?;
+    append_str_to_file(&log_file_path, &log_item.to_string()).map_err(Error::Io)?;
 
     if verbose {
         println!(
@@ -167,7 +162,8 @@ fn run() -> Result<(), String> {
             if message_string.trim().is_empty() {
                 return Err(String::from("Aborting due to empty log message."));
             }
-            write_log(&message_string, verbose, &log_dir_path)?;
+            write_log(&message_string, verbose, &log_dir_path)
+                .map_err(|error| error.to_string())?;
         }
         cli::Commands::Config { key, value } => match value {
             Some(value) => {

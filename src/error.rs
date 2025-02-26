@@ -5,6 +5,7 @@ use crate::constants::CONFIG_FILE_PATH;
 pub enum Error {
     LogDirNotFound(PathBuf),
     DateParse(String),
+    Io(std::io::Error),
 }
 
 impl Display for Error {
@@ -21,6 +22,9 @@ impl Display for Error {
             }
             Self::DateParse(date_string) => {
                 write!(f, "invalid date `{}`", date_string)
+            }
+            Self::Io(io_error) => {
+                write!(f, "{}", io_error)
             }
         }
     }
