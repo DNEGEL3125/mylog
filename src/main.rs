@@ -34,16 +34,16 @@ fn parse_date_from_str(date_str: &str) -> Result<NaiveDate, chrono::ParseError> 
     ))
 }
 
-fn view_logs(
+fn view_logs<P: AsRef<Path>>(
     date_str: Option<String>,
     all: bool,
     verbose: bool,
-    log_dir_path: &PathBuf,
+    log_dir_path: P,
 ) -> Result<(), String> {
     let today_date = get_today_date();
 
     if all {
-        PagingAllPager::new(log_dir_path.to_path_buf()).run();
+        PagingAllPager::new(log_dir_path.as_ref().to_path_buf()).run();
         return Ok(());
     }
 
@@ -53,7 +53,7 @@ fn view_logs(
         None => today_date,
     };
 
-    paging_log_file_by_date(log_dir_path, date, verbose);
+    paging_log_file_by_date(&log_dir_path.as_ref().to_path_buf(), date, verbose);
     Ok(())
 }
 
