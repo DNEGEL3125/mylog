@@ -68,17 +68,11 @@ pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(
         .map_err(|error| Error::DeserializeConfigFile(error.to_string()))?;
     let mut current_toml_node_opt: Option<&mut toml_edit::Item> = None;
     for key_part in key.split('.') {
-        println!("key part: {}", key_part);
         let new_node: &mut toml_edit::Item;
         if let Some(current_toml_node) = current_toml_node_opt {
-            println!("node: '{}'", current_toml_node);
             new_node = &mut current_toml_node[key_part];
         } else {
-            println!("doc: '{}'", toml_doc);
             new_node = &mut toml_doc[key_part];
-            //            new_node = toml_doc
-            //                .get_mut(key_part)
-            //                .unwrap_or(Err(format!("invalid key: {}", key))?);
         }
         if new_node.is_none() {
             return Err(Error::InvalidKey(key.to_owned()));
