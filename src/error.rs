@@ -7,6 +7,7 @@ pub enum Error {
     DateParse(String),
     Io(std::io::Error),
     InvalidKey(String),
+    EmptyLogMessage,
 }
 
 impl Display for Error {
@@ -29,6 +30,9 @@ impl Display for Error {
             }
             Self::InvalidKey(key) => {
                 write!(f, "invalid key: `{}`", key)
+            }
+            Self::EmptyLogMessage => {
+                write!(f, "Aborting due to empty log message.")
             }
         }
     }
