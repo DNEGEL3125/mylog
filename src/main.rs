@@ -7,7 +7,6 @@ use crate::error::Error;
 use chrono::NaiveDate;
 use clap::Parser;
 use config::{construct_log_file_path, Config};
-use constants::CONFIG_FILE_PATH;
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
 use log_pager::single_date_pager::SingleDatePager;
