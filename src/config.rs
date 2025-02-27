@@ -47,7 +47,7 @@ impl Config {
         let mut content = String::new();
         file.read_to_string(&mut content)
             .map_err(|error| Error::Io(error.kind()))?;
-        toml::from_str(&content).map_err(Error::DeserializeConfigFile)
+        toml::from_str(&content).map_err(|error| Error::DeserializeConfigFile(error.to_string()))
     }
 
     pub fn write_to_file(&self, mut file: &File) {

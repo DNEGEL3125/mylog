@@ -9,7 +9,7 @@ pub enum Error {
     Io(std::io::ErrorKind),
     InvalidKey(String),
     EmptyLogMessage,
-    DeserializeConfigFile(toml::de::Error),
+    DeserializeConfigFile(String),
 }
 
 impl Display for Error {
@@ -36,11 +36,11 @@ impl Display for Error {
             Self::EmptyLogMessage => {
                 write!(f, "Aborting due to empty log message.")
             }
-            Self::DeserializeConfigFile(error) => {
+            Self::DeserializeConfigFile(error_message) => {
                 write!(
                     f,
                     "error: fail to deserialize the config file: {}",
-                    error.message()
+                    error_message
                 )
             }
         }
