@@ -181,7 +181,7 @@ fn run() -> Result<(), String> {
 
 fn main() -> ExitCode {
     if let Err(error_message) = run() {
-        eprintln!("error: {}", error_message);
+        eprintln!("{}", error_message);
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS

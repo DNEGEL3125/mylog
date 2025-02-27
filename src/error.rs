@@ -23,13 +23,13 @@ impl Display for Error {
                 )
             }
             Self::DateParse(date_string) => {
-                write!(f, "invalid date `{}`", date_string)
+                write!(f, "error: invalid date `{}`", date_string)
             }
             Self::Io(io_error) => {
-                write!(f, "{}", io_error)
+                write!(f, "error: {}", io_error)
             }
             Self::InvalidKey(key) => {
-                write!(f, "invalid key: `{}`", key)
+                write!(f, "error: invalid key: `{}`", key)
             }
             Self::EmptyLogMessage => {
                 write!(f, "Aborting due to empty log message.")
