@@ -60,12 +60,12 @@ impl Config {
 /// This function updates a specific key in a TOML file with a new value.
 /// It reads the entire file, parses it as TOML, updates the value of the given key,
 /// and then writes the modified TOML back to the file.
-pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(), String> {
+pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(), Error> {
     let file_content =
-        std::fs::read_to_string(config_file_path).map_err(|error| error.to_string())?;
+        std::fs::read_to_string(config_file_path).map_err(|error| Error::Io(error.kind()))?;
     let mut toml_doc = file_content
         .parse::<toml_edit::DocumentMut>()
-        .map_err(|_| "invalid toml")?;
+        .map_err(|error| Error::DeserializeConfigFile(error.to_string()))?;
     let mut current_toml_node_opt: Option<&mut toml_edit::Item> = None;
     for key_part in key.split('.') {
         println!("key part: {}", key_part);
@@ -81,23 +81,26 @@ pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(
             //                .unwrap_or(Err(format!("invalid key: {}", key))?);
         }
         if new_node.is_none() {
-            Err(format!("invalid key: {}", key))?
+            return Err(Error::InvalidKey(key.to_owned()));
         }
         current_toml_node_opt = Some(new_node);
     }
     if let Some(current_toml_node) = current_toml_node_opt {
         *current_toml_node = toml_edit::value(value);
-        let mut config_file = File::create(config_file_path).map_err(|error| error.to_string())?;
+        let mut config_file =
+            File::create(config_file_path).map_err(|error| Error::Io(error.kind()))?;
 
         // Write the updated TOML content back to the config_file.
         config_file
             .write_all(toml_doc.to_string().as_bytes())
-            .map_err(|error| error.to_string())?;
+            .map_err(|error| Error::Io(error.kind()))?;
 
         // Ensure all buffered writes are written to the file.
-        config_file.flush().map_err(|error| error.to_string())?;
+        config_file
+            .flush()
+            .map_err(|error| Error::Io(error.kind()))?;
     } else {
-        return Err(format!("invalid key: {}", key));
+        return Err(Error::InvalidKey(key.to_string()));
     }
 
     Ok(())

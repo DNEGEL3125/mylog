@@ -134,19 +134,18 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
     edit::edit_file(log_file_path).map_err(|error| Error::Io(error.kind()))
 }
 
-fn run() -> Result<(), String> {
+fn run() -> Result<(), Error> {
     // Command line parameters
     let cli = cli::Cli::parse();
 
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let config = config::Config::from_config_file(config_file_path.as_path())
-        .map_err(|error| error.to_string())?;
+    let config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 
     match cli.command {
         cli::Commands::View { date, verbose, all } => {
-            view_logs(date, all, verbose, &log_dir_path).map_err(|error| error.to_string())?;
+            view_logs(date, all, verbose, &log_dir_path)?;
         }
         cli::Commands::Write { message, verbose } => {
             let message_string = if let Some(message_string) = message {
@@ -156,10 +155,9 @@ fn run() -> Result<(), String> {
             };
 
             if message_string.trim().is_empty() {
-                return Err(String::from("Aborting due to empty log message."));
+                return Err(Error::EmptyLogMessage);
             }
-            write_log(&message_string, verbose, &log_dir_path)
-                .map_err(|error| error.to_string())?;
+            write_log(&message_string, verbose, &log_dir_path)?;
         }
         cli::Commands::Config { key, value } => match value {
             Some(value) => {
@@ -169,20 +167,20 @@ fn run() -> Result<(), String> {
                 if let Some(value) = config.get_by_key(&key) {
                     println!("{}", value)
                 } else {
-                    Err(format!("invalid key: {}", key))?
+                    return Err(Error::InvalidKey(key));
                 }
             }
         },
         cli::Commands::Edit { date, verbose } => {
-            edit_logs(date, verbose, &log_dir_path).map_err(|error| error.to_string())?;
+            edit_logs(date, verbose, &log_dir_path)?;
         }
     };
     Ok(())
 }
 
 fn main() -> ExitCode {
-    if let Err(error_message) = run() {
-        eprintln!("{}", error_message);
+    if let Err(error) = run() {
+        eprintln!("{}", error);
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS
