@@ -2,10 +2,11 @@ use std::{fmt::Display, path::PathBuf};
 
 use crate::constants::CONFIG_FILE_PATH;
 
+#[derive(Debug, PartialEq)]
 pub enum Error {
     LogDirNotFound(PathBuf),
     DateParse(String),
-    Io(std::io::Error),
+    Io(std::io::ErrorKind),
     InvalidKey(String),
     EmptyLogMessage,
     DeserializeConfigFile(toml::de::Error),

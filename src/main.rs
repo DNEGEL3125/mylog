@@ -81,7 +81,8 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<()
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
 
-    append_str_to_file(&log_file_path, &log_item.to_string()).map_err(Error::Io)?;
+    append_str_to_file(&log_file_path, &log_item.to_string())
+        .map_err(|error| Error::Io(error.kind()))?;
 
     if verbose {
         println!(
@@ -131,7 +132,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
         }
     }
 
-    edit::edit_file(log_file_path).map_err(Error::Io)
+    edit::edit_file(log_file_path).map_err(|error| Error::Io(error.kind()))
 }
 
 fn run() -> Result<(), String> {
@@ -140,7 +141,8 @@ fn run() -> Result<(), String> {
 
     Config::create_config_file_if_not_exists();
     let config_file_path = &crate::constants::CONFIG_FILE_PATH;
-    let config = config::Config::from_config_file(config_file_path.as_path())?;
+    let config = config::Config::from_config_file(config_file_path.as_path())
+        .map_err(|error| error.to_string())?;
     let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 
     match cli.command {
