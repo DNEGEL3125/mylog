@@ -6,6 +6,7 @@ pub enum Error {
     LogDirNotFound(PathBuf),
     DateParse(String),
     Io(std::io::Error),
+    InvalidKey(String),
 }
 
 impl Display for Error {
@@ -25,6 +26,9 @@ impl Display for Error {
             }
             Self::Io(io_error) => {
                 write!(f, "{}", io_error)
+            }
+            Self::InvalidKey(key) => {
+                write!(f, "invalid key: `{}`", key)
             }
         }
     }
