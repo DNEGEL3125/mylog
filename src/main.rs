@@ -101,22 +101,17 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<()
     Ok(())
 }
 
-fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Result<(), String> {
+fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Result<(), Error> {
     let today_date = get_today_date();
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| error.to_string())?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|_| Error::DateParse(date_str))?,
         // Default date is today
         None => today_date,
     };
 
     if !log_dir_path.exists() {
-        let config_file_path = &CONFIG_FILE_PATH;
-        return Err(format!(
-            "The log directory '{}' doesn't exist.\nYou can configure it in '{}'",
-            log_dir_path.display(),
-            config_file_path.display()
-        ));
+        return Err(Error::LogDirNotFound(log_dir_path.to_path_buf()));
     }
 
     let log_file_path = construct_log_file_path(log_dir_path, &date);
@@ -136,7 +131,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
         }
     }
 
-    edit::edit_file(log_file_path).or(Err(String::from("Unable to edit the file")))
+    edit::edit_file(log_file_path).map_err(Error::Io)
 }
 
 fn run() -> Result<(), String> {
@@ -178,7 +173,7 @@ fn run() -> Result<(), String> {
             }
         },
         cli::Commands::Edit { date, verbose } => {
-            edit_logs(date, verbose, &log_dir_path)?;
+            edit_logs(date, verbose, &log_dir_path).map_err(|error| error.to_string())?;
         }
     };
     Ok(())
