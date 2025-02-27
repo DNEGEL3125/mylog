@@ -25,7 +25,7 @@ impl Display for Error {
                 )
             }
             Self::DateParse(date_string) => {
-                write!(f, "error: invalid date `{}`", date_string)
+                write!(f, "error: invalid date: `{}`", date_string)
             }
             Self::Io(io_error) => {
                 write!(f, "error: {}", io_error)
