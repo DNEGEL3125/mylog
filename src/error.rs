@@ -12,6 +12,7 @@ pub enum Error {
     Io(std::io::Error),
     InvalidKey(String),
     EmptyLogMessage,
+    SerializeConfigFile(toml::ser::Error),
     DeserializeConfigFile(String),
     DetermineConfigDir,
 }
@@ -21,6 +22,7 @@ impl std::error::Error for Error {
         match self {
             Self::DateParse { source, .. } => Some(source),
             Self::Io(err) => Some(err),
+            Self::SerializeConfigFile(source) => Some(source),
             _ => None,
         }
     }
@@ -49,6 +51,9 @@ impl Display for Error {
             }
             Self::EmptyLogMessage => {
                 write!(f, "Aborting due to empty log message.")
+            }
+            Self::SerializeConfigFile(source) => {
+                write!(f, "fail to serialize the config file: {}", source)
             }
             Self::DeserializeConfigFile(error_message) => {
                 write!(
