@@ -1,6 +1,6 @@
 use std::{fmt::Display, path::PathBuf};
 
-use crate::constants::PKG_NAME;
+use crate::constants::{CONFIG_DIR_ENV_VAR, PKG_NAME};
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -10,6 +10,7 @@ pub enum Error {
     InvalidKey(String),
     EmptyLogMessage,
     DeserializeConfigFile(String),
+    DetermineConfigDir,
 }
 
 impl Display for Error {
@@ -42,6 +43,9 @@ impl Display for Error {
                     "error: fail to deserialize the config file: {}",
                     error_message
                 )
+            }
+            Self::DetermineConfigDir => {
+                write!(f, "error: could not determine the config directory\nTry setting the environment variable `{}` to customize your configuration directory.", CONFIG_DIR_ENV_VAR)
             }
         }
     }
