@@ -115,7 +115,7 @@ pub fn get_date_from_log_file_name(file_name: &str) -> Option<NaiveDate> {
 pub fn config_dir_path() -> Option<PathBuf> {
     Some(
         std::env::var(CONFIG_DIR_ENV_VAR)
-            .map(|x| PathBuf::from(x))
+            .map(PathBuf::from)
             .unwrap_or(dirs::config_dir()?.join(PKG_NAME)),
     )
 }
