@@ -13,5 +13,6 @@ mylog write
 ```
 
 ## Installation
-1. Clone the repository
-2. Run `cargo install --path <path-to-repository>`
+```bash
+cargo install --locked --git https://github.com/DNEGEL3125/mylog
+```
