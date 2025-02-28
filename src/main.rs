@@ -139,7 +139,7 @@ fn run() -> Result<(), Error> {
     let cli = cli::Cli::parse();
 
     Config::create_config_file_if_not_exists();
-    let config_file_path = &crate::constants::CONFIG_FILE_PATH;
+    let config_file_path = &crate::config::config_file_path().unwrap();
     let config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 

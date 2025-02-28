@@ -1,4 +1,7 @@
-use crate::Error;
+use crate::{
+    constants::{CONFIG_DIR_ENV_VAR, PKG_NAME},
+    Error,
+};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,8 +9,6 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
 };
-
-use crate::constants::{CONFIG_DIR_PATH, CONFIG_FILE_PATH}; // You may need to add the `dirs` crate to your `Cargo.toml`
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Default)]
 pub struct LogConfig {
@@ -28,13 +29,13 @@ impl Config {
     }
 
     pub fn create_config_file_if_not_exists() {
-        let config_dir_path: &PathBuf = &CONFIG_DIR_PATH;
-        let config_file_path: &PathBuf = &CONFIG_FILE_PATH;
+        let config_dir_path: PathBuf = config_dir_path().unwrap();
+        let config_file_path: PathBuf = config_file_path().unwrap();
         if config_file_path.exists() {
             return;
         }
         create_dir_all(config_dir_path).expect("Can't create config file");
-        let file = File::create(config_file_path).expect("Can't create config file");
+        let file = File::create(&config_file_path).expect("Can't create config file");
         Config::default().write_to_file(&file);
         println!(
             "Created the config file in `{}`",
@@ -114,6 +115,18 @@ pub fn get_date_from_log_file_name(file_name: &str) -> Option<NaiveDate> {
             .map(Some)
             .unwrap_or(None)
     }
+}
+
+pub fn config_dir_path() -> Option<PathBuf> {
+    Some(
+        std::env::var(CONFIG_DIR_ENV_VAR)
+            .map(|x| PathBuf::from(x))
+            .unwrap_or(dirs::config_dir()?.join(PKG_NAME)),
+    )
+}
+
+pub fn config_file_path() -> Option<PathBuf> {
+    Some(config_dir_path()?.join("conf.toml"))
 }
 
 #[cfg(test)]
