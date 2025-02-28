@@ -143,7 +143,7 @@ fn run() -> Result<(), Error> {
     // Command line parameters
     let cli = cli::Cli::parse();
 
-    Config::create_config_file_if_not_exists();
+    Config::create_config_file_if_not_exists()?;
     let config_file_path = match crate::config::config_file_path() {
         Some(result) => result,
         None => {

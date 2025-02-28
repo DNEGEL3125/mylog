@@ -28,19 +28,23 @@ impl Config {
         }
     }
 
-    pub fn create_config_file_if_not_exists() {
-        let config_dir_path: PathBuf = config_dir_path().unwrap();
+    pub fn create_config_file_if_not_exists() -> Result<(), Error> {
+        let config_dir_path: PathBuf = match config_dir_path() {
+            Some(path) => path,
+            None => return Err(Error::DetermineConfigDir),
+        };
         let config_file_path: PathBuf = config_file_path().unwrap();
         if config_file_path.exists() {
-            return;
+            return Ok(());
         }
         create_dir_all(config_dir_path).expect("Can't create config file");
         let file = File::create(&config_file_path).expect("Can't create config file");
-        Config::default().write_to_file(&file);
+        Config::default().write_to_file(&file)?;
         println!(
             "Created the config file in `{}`",
             config_file_path.display()
         );
+        Ok(())
     }
 
     pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> Result<Config, Error> {
@@ -50,10 +54,9 @@ impl Config {
         toml::from_str(&content).map_err(|error| Error::DeserializeConfigFile(error.to_string()))
     }
 
-    pub fn write_to_file(&self, mut file: &File) {
-        let content = toml::to_string_pretty(self).expect("Unknown error");
-        file.write_all(content.as_bytes())
-            .expect("Can't write to the config file");
+    pub fn write_to_file(&self, mut file: &File) -> Result<(), Error> {
+        let content = toml::to_string_pretty(self).map_err(Error::SerializeConfigFile)?;
+        file.write_all(content.as_bytes()).map_err(Error::Io)
     }
 }
 
@@ -133,7 +136,9 @@ mod test {
         let (test_config_file, file_path) = crate::utils::fs::create_unique_temp_file();
         let mut log_config = Config::default();
         log_config.log.dir = "/var/log/mylog".into();
-        log_config.write_to_file(&test_config_file);
+        log_config
+            .write_to_file(&test_config_file)
+            .expect("should write the config to the file");
         std::mem::drop(test_config_file);
         assert_eq!(
             log_config,
