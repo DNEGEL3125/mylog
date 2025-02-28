@@ -6,6 +6,7 @@ use std::str::FromStr;
 use crate::error::Error;
 use chrono::NaiveDate;
 use clap::Parser;
+use config::config_file_path;
 use config::{construct_log_file_path, Config};
 use log_item::LogItem;
 use log_pager::paging_all_pager::PagingAllPager;
@@ -144,12 +145,13 @@ fn run() -> Result<(), Error> {
     let cli = cli::Cli::parse();
 
     Config::create_config_file_if_not_exists()?;
-    let config_file_path = match crate::config::config_file_path() {
+    let config_dir_path = match config::config_dir_path() {
         Some(result) => result,
         None => {
             return Err(Error::DetermineConfigDir);
         }
     };
+    let config_file_path = config_file_path(&config_dir_path);
     let config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 

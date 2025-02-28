@@ -33,7 +33,7 @@ impl Config {
             Some(path) => path,
             None => return Err(Error::DetermineConfigDir),
         };
-        let config_file_path: PathBuf = config_file_path().unwrap();
+        let config_file_path: PathBuf = config_file_path(&config_dir_path);
         if config_file_path.exists() {
             return Ok(());
         }
@@ -123,8 +123,8 @@ pub fn config_dir_path() -> Option<PathBuf> {
     )
 }
 
-pub fn config_file_path() -> Option<PathBuf> {
-    Some(config_dir_path()?.join("conf.toml"))
+pub fn config_file_path(config_dir_path: &Path) -> PathBuf {
+    config_dir_path.join("conf.toml")
 }
 
 #[cfg(test)]
