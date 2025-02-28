@@ -3,6 +3,30 @@ use std::{fmt::Display, path::PathBuf};
 use crate::constants::{CONFIG_DIR_ENV_VAR, PKG_NAME};
 
 #[derive(Debug)]
+pub enum DeserializeError {
+    TomlError(toml::de::Error),
+    TomlEditError(toml_edit::TomlError),
+}
+
+impl std::error::Error for DeserializeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            DeserializeError::TomlError(error) => Some(error),
+            DeserializeError::TomlEditError(error) => Some(error),
+        }
+    }
+}
+
+impl Display for DeserializeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DeserializeError::TomlError(error) => write!(f, "{}", error),
+            DeserializeError::TomlEditError(error) => write!(f, "{}", error),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum Error {
     LogDirNotFound(PathBuf),
     DateParse {
@@ -13,7 +37,7 @@ pub enum Error {
     InvalidKey(String),
     EmptyLogMessage,
     SerializeConfigFile(toml::ser::Error),
-    DeserializeConfigFile(String),
+    DeserializeConfigFile(DeserializeError),
     DetermineConfigDir,
 }
 
@@ -23,6 +47,7 @@ impl std::error::Error for Error {
             Self::DateParse { source, .. } => Some(source),
             Self::Io(err) => Some(err),
             Self::SerializeConfigFile(source) => Some(source),
+            Self::DeserializeConfigFile(source) => Some(source),
             _ => None,
         }
     }

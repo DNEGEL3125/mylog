@@ -1,6 +1,6 @@
 use crate::{
     constants::{CONFIG_DIR_ENV_VAR, PKG_NAME},
-    Error,
+    error, Error,
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,9 @@ impl Config {
         let mut file = File::open(file_path).map_err(Error::Io)?;
         let mut content = String::new();
         file.read_to_string(&mut content).map_err(Error::Io)?;
-        toml::from_str(&content).map_err(|error| Error::DeserializeConfigFile(error.to_string()))
+        toml::from_str(&content).map_err(|error| {
+            Error::DeserializeConfigFile(error::DeserializeError::TomlError(error))
+        })
     }
 
     pub fn write_to_file(&self, mut file: &File) -> Result<(), Error> {
@@ -67,7 +69,9 @@ pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(
     let file_content = std::fs::read_to_string(config_file_path).map_err(Error::Io)?;
     let mut toml_doc = file_content
         .parse::<toml_edit::DocumentMut>()
-        .map_err(|error| Error::DeserializeConfigFile(error.to_string()))?;
+        .map_err(|error| {
+            Error::DeserializeConfigFile(error::DeserializeError::TomlEditError(error))
+        })?;
     let mut current_toml_node_opt: Option<&mut toml_edit::Item> = None;
     for key_part in key.split('.') {
         let new_node: &mut toml_edit::Item;
