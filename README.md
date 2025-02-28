@@ -1,6 +1,8 @@
 # mylog
 A logger tool for keeping a diary.
 
+![Demo](doc/demo.gif)
+
 ## Usage
 ### View
 ```bash
@@ -16,3 +18,4 @@ mylog write
 ```bash
 cargo install --locked --git https://github.com/DNEGEL3125/mylog
 ```
+
