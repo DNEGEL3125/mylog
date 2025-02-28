@@ -144,8 +144,12 @@ fn run() -> Result<(), Error> {
     let cli = cli::Cli::parse();
 
     Config::create_config_file_if_not_exists();
-    let config_file_path =
-        &crate::config::config_file_path().unwrap_or(Err(Error::DetermineConfigDir)?);
+    let config_file_path = match crate::config::config_file_path() {
+        Some(result) => result,
+        None => {
+            return Err(Error::DetermineConfigDir);
+        }
+    };
     let config = config::Config::from_config_file(config_file_path.as_path())?;
     let log_dir_path = PathBuf::from_str(&config.log.dir).expect("Incorrect path");
 
@@ -167,7 +171,7 @@ fn run() -> Result<(), Error> {
         }
         cli::Commands::Config { key, value } => match value {
             Some(value) => {
-                config::set_by_key(config_file_path, &key, value)?;
+                config::set_by_key(&config_file_path, &key, value)?;
             }
             None => {
                 if let Some(value) = config.get_by_key(&key) {
