@@ -51,7 +51,7 @@ impl Config {
     }
 
     pub fn write_to_file(&self, mut file: &File) {
-        let content = toml::to_string(self).expect("Unknown error");
+        let content = toml::to_string_pretty(self).expect("Unknown error");
         file.write_all(content.as_bytes())
             .expect("Can't write to the config file");
     }
