@@ -44,10 +44,9 @@ impl Config {
     }
 
     pub fn from_config_file<P: AsRef<Path>>(file_path: P) -> Result<Config, Error> {
-        let mut file = File::open(file_path).map_err(|error| Error::Io(error.kind()))?;
+        let mut file = File::open(file_path).map_err(Error::Io)?;
         let mut content = String::new();
-        file.read_to_string(&mut content)
-            .map_err(|error| Error::Io(error.kind()))?;
+        file.read_to_string(&mut content).map_err(Error::Io)?;
         toml::from_str(&content).map_err(|error| Error::DeserializeConfigFile(error.to_string()))
     }
 
@@ -62,8 +61,7 @@ impl Config {
 /// It reads the entire file, parses it as TOML, updates the value of the given key,
 /// and then writes the modified TOML back to the file.
 pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(), Error> {
-    let file_content =
-        std::fs::read_to_string(config_file_path).map_err(|error| Error::Io(error.kind()))?;
+    let file_content = std::fs::read_to_string(config_file_path).map_err(Error::Io)?;
     let mut toml_doc = file_content
         .parse::<toml_edit::DocumentMut>()
         .map_err(|error| Error::DeserializeConfigFile(error.to_string()))?;
@@ -82,18 +80,15 @@ pub fn set_by_key(config_file_path: &Path, key: &str, value: String) -> Result<(
     }
     if let Some(current_toml_node) = current_toml_node_opt {
         *current_toml_node = toml_edit::value(value);
-        let mut config_file =
-            File::create(config_file_path).map_err(|error| Error::Io(error.kind()))?;
+        let mut config_file = File::create(config_file_path).map_err(Error::Io)?;
 
         // Write the updated TOML content back to the config_file.
         config_file
             .write_all(toml_doc.to_string().as_bytes())
-            .map_err(|error| Error::Io(error.kind()))?;
+            .map_err(Error::Io)?;
 
         // Ensure all buffered writes are written to the file.
-        config_file
-            .flush()
-            .map_err(|error| Error::Io(error.kind()))?;
+        config_file.flush().map_err(Error::Io)?;
     } else {
         return Err(Error::InvalidKey(key.to_string()));
     }
@@ -140,7 +135,10 @@ mod test {
         log_config.log.dir = "/var/log/mylog".into();
         log_config.write_to_file(&test_config_file);
         std::mem::drop(test_config_file);
-        assert_eq!(Ok(log_config), Config::from_config_file(&file_path));
+        assert_eq!(
+            log_config,
+            Config::from_config_file(&file_path).expect("fail to create the config file")
+        );
         std::fs::remove_file(&file_path).expect("Unable to delete the file");
     }
 }

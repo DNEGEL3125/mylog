@@ -53,7 +53,10 @@ fn view_logs<P: AsRef<Path>>(
     }
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str).map_err(|_| Error::DateParse(date_str))?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| Error::DateParse {
+            input: date_str,
+            source: error,
+        })?,
         // Default date is today
         None => today_date,
     };
@@ -80,8 +83,7 @@ fn write_log(log_content: &str, verbose: bool, log_dir_path: &Path) -> Result<()
         println!("Log info: {:#?}\nWriting the log message...", log_item);
     }
 
-    append_str_to_file(&log_file_path, &log_item.to_string())
-        .map_err(|error| Error::Io(error.kind()))?;
+    append_str_to_file(&log_file_path, &log_item.to_string()).map_err(Error::Io)?;
 
     if verbose {
         println!(
@@ -105,7 +107,10 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
     let today_date = get_today_date();
 
     let date = match date_str {
-        Some(date_str) => parse_date_from_str(&date_str).map_err(|_| Error::DateParse(date_str))?,
+        Some(date_str) => parse_date_from_str(&date_str).map_err(|error| Error::DateParse {
+            input: date_str,
+            source: error,
+        })?,
         // Default date is today
         None => today_date,
     };
@@ -131,7 +136,7 @@ fn edit_logs(date_str: Option<String>, verbose: bool, log_dir_path: &Path) -> Re
         }
     }
 
-    edit::edit_file(log_file_path).map_err(|error| Error::Io(error.kind()))
+    edit::edit_file(log_file_path).map_err(Error::Io)
 }
 
 fn run() -> Result<(), Error> {

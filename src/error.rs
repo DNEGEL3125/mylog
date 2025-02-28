@@ -2,11 +2,14 @@ use std::{fmt::Display, path::PathBuf};
 
 use crate::constants::{CONFIG_DIR_ENV_VAR, PKG_NAME};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
     LogDirNotFound(PathBuf),
-    DateParse(String),
-    Io(std::io::ErrorKind),
+    DateParse {
+        input: String,
+        source: chrono::ParseError,
+    },
+    Io(std::io::Error),
     InvalidKey(String),
     EmptyLogMessage,
     DeserializeConfigFile(String),
@@ -25,8 +28,8 @@ impl Display for Error {
                     pkg_name
                 )
             }
-            Self::DateParse(date_string) => {
-                write!(f, "error: invalid date: `{}`", date_string)
+            Self::DateParse { input, source } => {
+                write!(f, "invalid date '{}': {}", input, source)
             }
             Self::Io(io_error) => {
                 write!(f, "error: {}", io_error)
