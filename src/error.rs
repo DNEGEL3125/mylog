@@ -16,6 +16,16 @@ pub enum Error {
     DetermineConfigDir,
 }
 
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::DateParse { source, .. } => Some(source),
+            Self::Io(err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
